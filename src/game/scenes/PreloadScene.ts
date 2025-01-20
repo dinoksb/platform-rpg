@@ -62,7 +62,7 @@ export class PreloadScene extends Scene {
         // ui assets
         this.load.image(
             UI_ASSET_KEYS.CURSOR,
-            `${monsterTamerAssetsPath}/monsters/iguanignite.png`
+            `${monsterTamerAssetsPath}/ui/cursor.png`
         );
     }
 

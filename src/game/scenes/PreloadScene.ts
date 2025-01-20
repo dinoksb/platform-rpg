@@ -4,7 +4,8 @@ import {
     BATTLE_BACKGROUND_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
-} from "../../assets/assetKeys";
+    UI_ASSET_KEYS,
+} from "../../assets/AssetsKeys";
 import { SCENE_KEYS } from "./SceneKeys";
 
 export class PreloadScene extends Scene {
@@ -55,6 +56,12 @@ export class PreloadScene extends Scene {
 
         this.load.image(
             MONSTER_ASSET_KEYS.IGUANIGNITE,
+            `${monsterTamerAssetsPath}/monsters/iguanignite.png`
+        );
+
+        // ui assets
+        this.load.image(
+            UI_ASSET_KEYS.CURSOR,
             `${monsterTamerAssetsPath}/monsters/iguanignite.png`
         );
     }

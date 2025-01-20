@@ -1,4 +1,4 @@
-export const SCENE_KEYS = Object.freeze({
-    PRELOAD_SCENE: 'PRELOAD_SCENE',
-    BATTLE_SCENE: 'BATTLE_SCENE',
-});
+export enum SCENE_KEYS {
+    PRELOAD_SCENE = "PRELOAD_SCENE",
+    BATTLE_SCENE = "BATTLE_SCENE",
+}

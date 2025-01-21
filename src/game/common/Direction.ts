@@ -1,9 +1,9 @@
 export const DIRECTION = {
-    LEFT: 'LEFT',
-    RIGHT: 'RIGHT',
-    UP: 'UP',
-    DOWN: 'DOWN',
-    NONE: 'NONE',
+    NONE: "NONE",
+    LEFT: "LEFT",
+    RIGHT: "RIGHT",
+    UP: "UP",
+    DOWN: "DOWN",
 } as const;
 
-export type Direction = typeof DIRECTION[keyof typeof DIRECTION];
+export type Direction = (typeof DIRECTION)[keyof typeof DIRECTION];

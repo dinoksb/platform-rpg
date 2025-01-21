@@ -2,6 +2,7 @@ import { Scene } from "phaser";
 import {
     BATTLE_ASSET_KEYS,
     BATTLE_BACKGROUND_ASSET_KEYS,
+    DATA_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
     UI_ASSET_KEYS,
@@ -48,6 +49,21 @@ export class PreloadScene extends Scene {
             `${kenneysAssetPath}/ui-space-expansion/barHorizontal_green_left.png`
         );
 
+        this.load.image(
+            HEALTH_BAR_ASSET_KEYS.RIGHT_CAP_SHADOW,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_shadow_right.png`
+        );
+
+        this.load.image(
+            HEALTH_BAR_ASSET_KEYS.MIDDLE_SHADOW,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_shadow_mid.png`
+        );
+
+        this.load.image(
+            HEALTH_BAR_ASSET_KEYS.LEFT_CAP_SHADOW,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_shadow_left.png`
+        );
+
         // monster assets
         this.load.image(
             MONSTER_ASSET_KEYS.CARNODUSK,
@@ -64,6 +80,9 @@ export class PreloadScene extends Scene {
             UI_ASSET_KEYS.CURSOR,
             `${monsterTamerAssetsPath}/ui/cursor.png`
         );
+
+        // load json data
+        this.load.json(DATA_ASSET_KEYS.ATTACKS, "assets/data/attacks.json");
     }
 
     create() {

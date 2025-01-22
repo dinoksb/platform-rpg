@@ -28,6 +28,12 @@ export const DATA_ASSET_KEYS = {
     ATTACKS: "ATTACKS",
 } as const;
 
+export const ATTACK_ASSET_KEYS = {
+    ICE_SHARD: "ICE_SHARD",
+    ICE_SHARD_START: "ICE_SHARD_START",
+    SLASH: "SLASH",
+} as const;
+
 export type BattleBackgroundAssetKey =
     (typeof BATTLE_BACKGROUND_ASSET_KEYS)[keyof typeof BATTLE_BACKGROUND_ASSET_KEYS];
 export type MonsterAssetKey =
@@ -39,6 +45,8 @@ export type HealthBarAssetKey =
 export type UIAssetKey = (typeof UI_ASSET_KEYS)[keyof typeof UI_ASSET_KEYS];
 export type DataAssetKey =
     (typeof DATA_ASSET_KEYS)[keyof typeof DATA_ASSET_KEYS];
+export type AttackAssetKey =
+    (typeof ATTACK_ASSET_KEYS)[keyof typeof ATTACK_ASSET_KEYS];
 
 export type AssetKey =
     | BattleBackgroundAssetKey
@@ -46,4 +54,5 @@ export type AssetKey =
     | BattleAssetKey
     | HealthBarAssetKey
     | UIAssetKey
-    | DataAssetKey;
+    | DataAssetKey
+    | AttackAssetKey;

@@ -1,5 +1,5 @@
 import { DATA_ASSET_KEYS } from "../assets/AssetsKeys";
-import { Attack } from "../game/interfaces/Monster";
+import { Attack } from "../game/interfaces/MonsterTypeDef";
 
 export class DataUtils {
     static getMonsterAttack(scene: Phaser.Scene, attackId: string) {

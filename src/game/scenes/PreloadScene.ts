@@ -1,5 +1,6 @@
 import { Scene } from "phaser";
 import {
+    ATTACK_ASSET_KEYS,
     BATTLE_ASSET_KEYS,
     BATTLE_BACKGROUND_ASSET_KEYS,
     DATA_ASSET_KEYS,
@@ -8,6 +9,8 @@ import {
     UI_ASSET_KEYS,
 } from "../../assets/AssetsKeys";
 import { SCENE_KEYS } from "./SceneKeys";
+import { WebFontFileLoader } from "../../assets/WebFontFileLoader";
+import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 
 export class PreloadScene extends Scene {
     constructor() {
@@ -20,6 +23,7 @@ export class PreloadScene extends Scene {
         console.log(`[${PreloadScene.name}:preload] invoked`);
         const monsterTamerAssetsPath = "assets/images/monster-tamer";
         const kenneysAssetPath = "assets/images/kenneys-assets";
+        const pimenAssetPath = "assets/images/pimen"
 
         // battle backgrounds
         this.load.image(
@@ -83,6 +87,23 @@ export class PreloadScene extends Scene {
 
         // load json data
         this.load.json(DATA_ASSET_KEYS.ATTACKS, "assets/data/attacks.json");
+
+        // load custom font
+        this.load.addFile(new WebFontFileLoader(this.load, [KENNEY_FUTURE_NARROW_FONT_NAME]));
+
+        // load attack assets
+        this.load.spritesheet(ATTACK_ASSET_KEYS.ICE_SHARD, `${pimenAssetPath}/ice-attack/active.png`, {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
+        this.load.spritesheet(ATTACK_ASSET_KEYS.ICE_SHARD_START, `${pimenAssetPath}/ice-attack/start.png`, {
+            frameWidth: 32,
+            frameHeight: 32,
+        });
+        this.load.spritesheet(ATTACK_ASSET_KEYS.SLASH, `${pimenAssetPath}/slash.png`, {
+            frameWidth: 48,
+            frameHeight: 48,
+        });
     }
 
     create() {

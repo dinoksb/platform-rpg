@@ -1,7 +1,10 @@
+import { AttackKeys } from "../battle/attacks/AttackKeys";
+
 export interface BattleMonsterConfig {
     scene: Phaser.Scene;
     monsterDetails: Monster;
     scaleHealthBarBackgroundImageByY?: number;
+    skipBattleAnimation:boolean;
 }
 
 export interface Monster {
@@ -18,5 +21,5 @@ export interface Monster {
 export interface Attack {
     id: number;
     name: string;
-    animationName: string;
+    animationName: AttackKeys;
 }

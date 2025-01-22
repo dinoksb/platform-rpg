@@ -1,4 +1,5 @@
-import { BattleMonsterConfig } from "../../interfaces/Monster";
+import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../../assets/FontKeys";
+import { BattleMonsterConfig } from "../../interfaces/MonsterTypeDef";
 import { BattleMonster } from "./BattleMonster";
 
 export const PLAYER_POSITION = {
@@ -23,9 +24,95 @@ export class PlayerBattleMonster extends BattleMonster {
         this.setHealthBarText();
     }
 
+    public override playMonsterAppearAnimation(callback: () => void){
+        const startPosX = 30;
+        const endPosX = PLAYER_POSITION.x;
+        this.phaserGameObject.setPosition(startPosX, PLAYER_POSITION.y);
+        this.phaserGameObject.setAlpha(1);
+
+        if(this.skipBattleAnimations){
+            this.phaserGameObject.setX(endPosX);
+            callback();
+            return;
+        }
+
+        this.scene.tweens.add({
+            delay: 0,
+            duration: 800,
+            x: {
+                from: startPosX,
+                start: startPosX,
+                to: endPosX,
+            },
+            targets: this.phaserGameObject,
+            onComplete: () => {
+                if(callback){
+                    callback();
+                }
+            }
+        });
+    }
+
+    public override playMonsterHealthBarAppearAnimation(callback: () => void){
+        const startPosX = 800;
+        const endPosX =  this.phaserHealthBarGameContainer.x;
+        this.phaserHealthBarGameContainer.setPosition(startPosX, this.phaserHealthBarGameContainer.y);
+        this.phaserHealthBarGameContainer.setAlpha(1);
+
+        if(this.skipBattleAnimations){
+            this.phaserHealthBarGameContainer.setX(endPosX);
+            callback();
+            return;
+        }
+
+        this.scene.tweens.add({
+            delay: 0,
+            duration: 800,
+            x: {
+                from: startPosX,
+                start: startPosX,
+                to: endPosX,
+            },
+            targets: this.phaserHealthBarGameContainer,
+            onComplete: () => {
+                if(callback){
+                    callback();
+                }
+            }
+        });
+    }
+
+    public override playDeathAnimation(callback: () => void){
+        const startPosY = this.phaserGameObject.y;
+        const endPosY = startPosY + 400;
+
+        if(this.skipBattleAnimations){
+            this.phaserGameObject.setY(endPosY);
+            callback();
+            return;
+        }
+
+        this.scene.tweens.add({
+            delay: 0,
+            duration: 2000,
+            y: {
+                from: startPosY,
+                start: startPosY,
+                to: endPosY,
+            },
+            targets: this.phaserGameObject,
+            onComplete: () => {
+                if(callback){
+                    callback();
+                }
+            }
+        });
+    }
+
     private addHealthBarComponents() {
         this.healthBarTextGameObject = this.scene.add
             .text(443, 80, "25/25", {
+                fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
                 color: "#7E3D3F",
                 fontSize: "16px",
                 fontStyle: "italic",

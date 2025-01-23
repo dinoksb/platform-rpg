@@ -4,7 +4,7 @@ export interface BattleMonsterConfig {
     scene: Phaser.Scene;
     monsterDetails: Monster;
     scaleHealthBarBackgroundImageByY?: number;
-    skipBattleAnimation:boolean;
+    skipBattleAnimation: boolean;
 }
 
 export interface Monster {
@@ -22,4 +22,14 @@ export interface Attack {
     id: number;
     name: string;
     animationName: AttackKeys;
+}
+
+export interface Animation {
+    key: string;
+    frames: number[];
+    frameRate: number;
+    repeat: number;
+    delay: number;
+    yoyo: boolean;
+    assetKey: string;
 }

@@ -1,7 +1,6 @@
 import { Scene } from "phaser";
 import { SCENE_KEYS } from "./SceneKeys";
 import { BattleMenu } from "../battle/ui/menu/BattleMenu";
-import { Direction, DIRECTION } from "../common/Direction";
 import { Background } from "../battle/Background";
 import { EnemyBattleMonster } from "../battle/monsters/EnemyBattleMonster";
 import { PlayerBattleMonster } from "../battle/monsters/PlayerBattleMonster";
@@ -10,10 +9,13 @@ import { StateMachine } from "../../utils/StateMachine";
 import { BATTLE_STATES } from "../battle/states/BattleStates";
 import { SKIP_BATTLE_ANIMATIONS } from "../../Config";
 import { ATTACK_TARGET, AttackManager } from "../battle/attacks/AttackManager";
+import { createSceneTransition } from "../../utils/SceneTransition";
+import { Controls } from "../../utils/Controls";
+import { DIRECTION } from "../common/Direction";
 
 export class BattleScene extends Scene {
     private battleMenu: BattleMenu;
-    private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
+    private controls: Controls;
     private activePlayerMonster: PlayerBattleMonster;
     private activeEnemyMonster: EnemyBattleMonster;
     private activePlayerAttackIndex: number;
@@ -72,15 +74,13 @@ export class BattleScene extends Scene {
         this.createBattleStateMachine();
         this.attackManager = new AttackManager(this, SKIP_BATTLE_ANIMATIONS);
 
-        this.cursorKeys = this.input.keyboard!.createCursorKeys();
+        this.controls = new Controls(this);
     }
 
     update() {
         this.battleStateMachine.update();
 
-        const wasSpaceKeyPressed = Phaser.Input.Keyboard.JustDown(
-            this.cursorKeys.space
-        );
+        const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         // limit input based on the current battle state we are in
         // if we are not in the right battle state, return early and do not process input
         if (
@@ -128,22 +128,12 @@ export class BattleScene extends Scene {
             return;
         }
 
-        if (Phaser.Input.Keyboard.JustDown(this.cursorKeys.shift)) {
+        if (this.controls.wasBackKeyPressed()) {
             this.battleMenu.handlePlayerInput("CANCEL");
             return;
         }
 
-        let selectedDirection: Direction = DIRECTION.NONE;
-        if (this.cursorKeys.left.isDown) {
-            selectedDirection = DIRECTION.LEFT;
-        } else if (this.cursorKeys.right.isDown) {
-            selectedDirection = DIRECTION.RIGHT;
-        } else if (this.cursorKeys.up.isDown) {
-            selectedDirection = DIRECTION.UP;
-        } else if (this.cursorKeys.down.isDown) {
-            selectedDirection = DIRECTION.DOWN;
-        }
-
+        const selectedDirection = this.controls.getDirectionKeyJustPressed();
         if (selectedDirection !== DIRECTION.NONE) {
             this.battleMenu.handlePlayerInput(selectedDirection);
         }
@@ -258,7 +248,7 @@ export class BattleScene extends Scene {
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
-                this.scene.start(SCENE_KEYS.BATTLE_SCENE);
+                this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );
     }
@@ -269,10 +259,13 @@ export class BattleScene extends Scene {
             name: BATTLE_STATES.INTRO,
             onEnter: () => {
                 // wait for any scene setup and transitions to complete.
-                this.time.delayedCall(500, () => {
-                    this.battleStateMachine.setState(
-                        BATTLE_STATES.PRE_BATTLE_INFO
-                    );
+                createSceneTransition(this, {
+                    skipSceneTransition: SKIP_BATTLE_ANIMATIONS,
+                    callback: () => {
+                        this.battleStateMachine.setState(
+                            BATTLE_STATES.PRE_BATTLE_INFO
+                        );
+                    },
                 });
             },
         });

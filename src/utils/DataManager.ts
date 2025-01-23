@@ -1,5 +1,9 @@
 import { TILE_SIZE } from "../Config";
 import { Direction, DIRECTION } from "../game/common/Direction";
+import {
+    BATTLE_SCENE_OPTIONS,
+    BattleSceneOptions,
+} from "../game/common/Options";
 
 interface GlobalState {
     player: {
@@ -9,9 +13,12 @@ interface GlobalState {
         };
         direction: Direction;
     };
+    options: {
+        battleSceneAnimations: BattleSceneOptions;
+    };
 }
 
-const initialState = {
+const initialState: GlobalState = {
     player: {
         position: {
             x: 6 * TILE_SIZE,
@@ -19,11 +26,15 @@ const initialState = {
         },
         direction: DIRECTION.DOWN,
     },
+    options: {
+        battleSceneAnimations: BATTLE_SCENE_OPTIONS.OFF,
+    },
 };
 
 export const DATA_MANAGER_STORE_KEYS = {
     PLAYER_POSITION: "PLAYER_POSITION",
     PLAYER_DIRECTION: "PLAYER_DIRECTION",
+    OPTIONS_BATTLE_SCENE_ANIMATIONS: "OPTIONS_BATTLE_SCENE_ANIMATIONS",
 } as const;
 
 class DataManager extends Phaser.Events.EventEmitter {
@@ -42,6 +53,8 @@ class DataManager extends Phaser.Events.EventEmitter {
         this.store.set({
             [DATA_MANAGER_STORE_KEYS.PLAYER_POSITION]: data.player.position,
             [DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION]: data.player.direction,
+            [DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS]:
+                data.options.battleSceneAnimations,
         });
     }
 }

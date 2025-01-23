@@ -7,11 +7,12 @@ import { PlayerBattleMonster } from "../battle/monsters/PlayerBattleMonster";
 import { MONSTER_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { StateMachine } from "../../utils/StateMachine";
 import { BATTLE_STATES } from "../battle/states/BattleStates";
-import { SKIP_BATTLE_ANIMATIONS } from "../../Config";
 import { ATTACK_TARGET, AttackManager } from "../battle/attacks/AttackManager";
 import { createSceneTransition } from "../../utils/SceneTransition";
 import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
+import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
+import { BATTLE_SCENE_OPTIONS } from "../common/Options";
 
 export class BattleScene extends Scene {
     private battleMenu: BattleMenu;
@@ -21,6 +22,7 @@ export class BattleScene extends Scene {
     private activePlayerAttackIndex: number;
     private battleStateMachine: StateMachine;
     private attackManager: AttackManager;
+    private skipAnimations: boolean;
 
     constructor() {
         super({
@@ -30,6 +32,16 @@ export class BattleScene extends Scene {
 
     init() {
         this.activePlayerAttackIndex = -1;
+        this.skipAnimations = true;
+        const chosenBattleSceneOption = dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS
+        );
+        if (
+            chosenBattleSceneOption === undefined ||
+            chosenBattleSceneOption === BATTLE_SCENE_OPTIONS.ON
+        ) {
+            this.skipAnimations = false;
+        }
     }
 
     create() {
@@ -51,7 +63,7 @@ export class BattleScene extends Scene {
                 baseAttack: 5,
                 currentLevel: 5,
             },
-            skipBattleAnimation: SKIP_BATTLE_ANIMATIONS,
+            skipBattleAnimation: this.skipAnimations,
         });
 
         this.activePlayerMonster = new PlayerBattleMonster({
@@ -66,13 +78,13 @@ export class BattleScene extends Scene {
                 baseAttack: 15,
                 currentLevel: 5,
             },
-            skipBattleAnimation: SKIP_BATTLE_ANIMATIONS,
+            skipBattleAnimation: this.skipAnimations,
         });
 
         // render out the main info and sub info panles
         this.battleMenu = new BattleMenu(this, this.activePlayerMonster);
         this.createBattleStateMachine();
-        this.attackManager = new AttackManager(this, SKIP_BATTLE_ANIMATIONS);
+        this.attackManager = new AttackManager(this, this.skipAnimations);
 
         this.controls = new Controls(this);
     }
@@ -164,7 +176,7 @@ export class BattleScene extends Scene {
                     );
                 });
             },
-            SKIP_BATTLE_ANIMATIONS
+            this.skipAnimations
         );
     }
 
@@ -199,7 +211,7 @@ export class BattleScene extends Scene {
                     );
                 });
             },
-            SKIP_BATTLE_ANIMATIONS
+            this.skipAnimations
         );
     }
 
@@ -216,7 +228,7 @@ export class BattleScene extends Scene {
                             BATTLE_STATES.FINISHED
                         );
                     },
-                    SKIP_BATTLE_ANIMATIONS
+                    this.skipAnimations
                 );
             });
             return;
@@ -234,7 +246,7 @@ export class BattleScene extends Scene {
                             BATTLE_STATES.FINISHED
                         );
                     },
-                    SKIP_BATTLE_ANIMATIONS
+                    this.skipAnimations
                 );
             });
             return;
@@ -260,7 +272,7 @@ export class BattleScene extends Scene {
             onEnter: () => {
                 // wait for any scene setup and transitions to complete.
                 createSceneTransition(this, {
-                    skipSceneTransition: SKIP_BATTLE_ANIMATIONS,
+                    skipSceneTransition: this.skipAnimations,
                     callback: () => {
                         this.battleStateMachine.setState(
                             BATTLE_STATES.PRE_BATTLE_INFO
@@ -285,7 +297,7 @@ export class BattleScene extends Scene {
                                 BATTLE_STATES.BRING_OUT_MONSTER
                             );
                         },
-                        SKIP_BATTLE_ANIMATIONS
+                        this.skipAnimations
                     );
                 });
             },
@@ -308,7 +320,7 @@ export class BattleScene extends Scene {
                                 );
                             });
                         },
-                        SKIP_BATTLE_ANIMATIONS
+                        this.skipAnimations
                     );
                 });
             },
@@ -362,7 +374,7 @@ export class BattleScene extends Scene {
                             BATTLE_STATES.FINISHED
                         );
                     },
-                    SKIP_BATTLE_ANIMATIONS
+                    this.skipAnimations
                 );
             },
         });

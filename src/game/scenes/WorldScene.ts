@@ -29,7 +29,7 @@ export class WorldScene extends Scene {
         const x = 6 * TILE_SIZE;
         const y = 22 * TILE_SIZE;
         this.cameras.main.setBounds(0, 0, 1280, 2176);
-        this.cameras.main.setZoom(0.3);
+        this.cameras.main.setZoom(0.8);
         this.cameras.main.centerOn(x, y);
 
         const map = this.make.tilemap({

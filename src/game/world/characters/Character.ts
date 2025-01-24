@@ -19,7 +19,8 @@ export interface CharacterConfig {
     direction: Direction;
     spriteGridMovementFinishedCallback: () => void;
     idleFrameConfig: CharacterIdleFrameConfig;
-    collisionLayer: Phaser.Tilemaps.TilemapLayer | undefined;
+    collisionLayer: Phaser.Tilemaps.TilemapLayer;
+    spriteChangedDirectionCallback: () => void;
 }
 
 export class Character {
@@ -33,6 +34,7 @@ export class Character {
     protected idleFrameConfig: CharacterIdleFrameConfig;
     protected origin: Coordinate;
     protected collisionLayer: Phaser.Tilemaps.TilemapLayer;
+    protected spriteChangedDirectionCallback: () => void;
 
     constructor(config: CharacterConfig) {
         if (this.constructor === Character) {
@@ -59,6 +61,8 @@ export class Character {
             .setOrigin(this.origin.x, this.origin.y);
         this.spriteGridMovementFinishedCallback =
             config.spriteGridMovementFinishedCallback;
+        this.spriteChangedDirectionCallback =
+            config.spriteChangedDirectionCallback;
     }
 
     public get getSprite() {
@@ -110,7 +114,15 @@ export class Character {
     }
 
     public moveSprite(direction: Direction): void {
+        const changedDirection = this.direction !== direction;
         this.direction = direction;
+
+        if(changedDirection){
+            if(this.spriteChangedDirectionCallback !== undefined){
+                this.spriteChangedDirectionCallback();
+            }
+        }
+
         if (this.isBlockingTile()) {
             return;
         }
@@ -181,7 +193,6 @@ export class Character {
 
         const { x, y } = position;
         const tile = this.collisionLayer.getTileAtWorldXY(x, y, true);
-        console.log("tile.index: ", tile.index);
 
         return tile.index !== -1;
     }

@@ -39,6 +39,11 @@ export class BattleMonster {
         }
         this.createHealthBarComponents(scaleY);
 
+
+        this.healthBar.setMeterPercentageAnimated(this.currentHealth / this.maxHealth, {
+            skipbattleAnimations: true,
+        });
+
         this.monsterDetails.attackIds.forEach((attackId) => {
             const monsterAttack = DataUtils.getMonsterAttack(
                 this.scene,

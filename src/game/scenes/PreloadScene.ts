@@ -7,6 +7,7 @@ import {
     DATA_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
+    TITLE_ASSET_KEYS,
     UI_ASSET_KEYS,
     WORLD_ASSET_KEYS,
 } from "../../assets/AssetsKeys";
@@ -89,6 +90,10 @@ export class PreloadScene extends Scene {
         this.load.image(
             UI_ASSET_KEYS.CURSOR,
             `${monsterTamerAssetsPath}/ui/cursor.png`
+        );
+        this.load.image(
+            UI_ASSET_KEYS.MENU_BACKGROUND,
+            `${kenneysAssetPath}/ui-space-expansion/glassPanel.png`
         );
 
         // load json data
@@ -180,12 +185,17 @@ export class PreloadScene extends Scene {
                 frameHeight: 16,
             }
         );
+
+        // ui components for title
+        this.load.image(TITLE_ASSET_KEYS.BACKGROUND, `${monsterTamerAssetsPath}/ui/title/background.png`);
+        this.load.image(TITLE_ASSET_KEYS.PANEL, `${monsterTamerAssetsPath}/ui/title/title_background.png`);
+        this.load.image(TITLE_ASSET_KEYS.TITLE, `${monsterTamerAssetsPath}/ui/title/title_text.png`);
     }
 
     create() {
         console.log(`[${PreloadScene.name}:create] invoked`);
         this.createAnimations();
-        this.scene.start(SCENE_KEYS.WORLD_SCENE);
+        this.scene.start(SCENE_KEYS.TITLE_SCENE);
     }
 
     private createAnimations() {

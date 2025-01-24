@@ -1,4 +1,4 @@
-import { TILE_SIZE } from "../Config";
+import { TEXT_SPEED, TILE_SIZE } from "../Config";
 import { Direction, DIRECTION } from "../game/common/Direction";
 import {
     BATTLE_SCENE_OPTIONS,
@@ -15,6 +15,7 @@ interface GlobalState {
     };
     options: {
         battleSceneAnimations: BattleSceneOptions;
+        textSpeed: number;
     };
 }
 
@@ -28,6 +29,7 @@ const initialState: GlobalState = {
     },
     options: {
         battleSceneAnimations: BATTLE_SCENE_OPTIONS.OFF,
+        textSpeed: TEXT_SPEED.FAST,
     },
 };
 
@@ -35,6 +37,7 @@ export const DATA_MANAGER_STORE_KEYS = {
     PLAYER_POSITION: "PLAYER_POSITION",
     PLAYER_DIRECTION: "PLAYER_DIRECTION",
     OPTIONS_BATTLE_SCENE_ANIMATIONS: "OPTIONS_BATTLE_SCENE_ANIMATIONS",
+    OPTIONS_TEXT_SPEED: "OPTIONS_TEXT_SPEED",
 } as const;
 
 class DataManager extends Phaser.Events.EventEmitter {
@@ -55,6 +58,8 @@ class DataManager extends Phaser.Events.EventEmitter {
             [DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION]: data.player.direction,
             [DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS]:
                 data.options.battleSceneAnimations,
+            [DATA_MANAGER_STORE_KEYS.OPTIONS_TEXT_SPEED]:
+                data.options.textSpeed,
         });
     }
 }

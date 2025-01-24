@@ -6,17 +6,21 @@ import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
 import { TILE_SIZE, TILED_COLLISION_LAYER_ALPHA } from "../../Config";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
+import { DialogUI } from "../world/DialogUI";
 
 export class WorldScene extends Scene {
     private player: Player;
     private controls: Controls;
     private encounterLayer: Phaser.Tilemaps.TilemapLayer;
     private whildMonsterEncountered: boolean;
+    private dialogUI: DialogUI;
+    private isShowStartMessage: boolean;
 
     constructor() {
         super({
             key: SCENE_KEYS.WORLD_SCENE,
         });
+        this.isShowStartMessage = false;
     }
 
     init() {
@@ -102,14 +106,29 @@ export class WorldScene extends Scene {
             spriteGridMovementFinishedCallback: () => {
                 this.handlePlayerMovementUpdate();
             },
+            spriteChangedDirectionCallback: () => {
+                this.handlePlayerDirectionUpdate();
+            }
         });
 
         this.cameras.main.startFollow(this.player.getSprite);
 
+        // create foreground for depth
         this.add.image(0, 0, WORLD_ASSET_KEYS.WORLD_FOREGROUND, 0).setOrigin(0);
+
+        // create dialog ui
+        this.dialogUI = new DialogUI(this, 1280);
 
         this.controls = new Controls(this);
         this.cameras.main.fadeIn(1000, 0, 0, 0);
+        if(!this.isShowStartMessage){
+            this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
+                this.dialogUI.showDialogModal(['Start an exciting journey with your monster!']);
+                this.isShowStartMessage = true;
+            });
+        }
+        
+
     }
 
     update(time: DOMHighResTimeStamp) {
@@ -119,8 +138,12 @@ export class WorldScene extends Scene {
         }
 
         const selectedDirection = this.controls.getDirectionKeyPressDown();
-        if (selectedDirection !== DIRECTION.NONE) {
+        if (selectedDirection !== DIRECTION.NONE && !this.isPlayerInputLocked() && this.isShowStartMessage) {
             this.player.moveCharacter(selectedDirection);
+        } 
+
+        if(this.controls.wasSpaceKeyPressed() && !this.player.getIsMoving){
+            this.handlePlayerInteraction();
         }
 
         this.player.update(time);
@@ -131,10 +154,7 @@ export class WorldScene extends Scene {
             x: this.player.getSprite.x,
             y: this.player.getSprite.y,
         });
-        dataManager.getStore.set(
-            DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
-            this.player.getDirection
-        );
+
         if (!this.encounterLayer) {
             return;
         }
@@ -162,5 +182,35 @@ export class WorldScene extends Scene {
                 }
             );
         }
+    }
+
+    private handlePlayerInteraction(){
+        if(this.dialogUI.getIsAnimationPlayer){
+            return;
+        }
+
+        if(this.dialogUI.getIsVisible && !this.dialogUI.getMoreMessagesToShow){
+            this.dialogUI.hideDialogModal();
+            return;
+        }
+
+        if(this.dialogUI.getIsVisible && this.dialogUI.getMoreMessagesToShow){
+            this.dialogUI.showNextMessage();
+            return;
+        }
+
+    }
+
+    private isPlayerInputLocked(){
+        return this.dialogUI.getIsVisible;
+    }
+
+    private handlePlayerDirectionUpdate(){
+        console.log(('test'));
+        
+        dataManager.getStore.set(
+            DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
+            this.player.getDirection
+        );
     }
 }

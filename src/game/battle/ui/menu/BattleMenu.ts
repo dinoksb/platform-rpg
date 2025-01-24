@@ -1,5 +1,6 @@
 import { UI_ASSET_KEYS } from "../../../../assets/AssetsKeys";
 import { SKIP_BATTLE_ANIMATIONS } from "../../../../Config";
+import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../../../utils/DataManager";
 import { exhaustiveGuard } from "../../../../utils/Guard";
 import { animateText } from "../../../../utils/TextUtils";
 import { Direction } from "../../../common/Direction";
@@ -48,6 +49,7 @@ export class BattleMenu {
     private userInputCursorPhaserTween: Phaser.Tweens.Tween;
     private queueMessagesSkipAnimation: boolean;
     private queuedMessageAnimationPlaying: boolean;
+    private textAnimationSpeed: number;
 
     constructor(scene: Phaser.Scene, activePlayerMonster: BattleMonster) {
         this.scene = scene;
@@ -64,6 +66,10 @@ export class BattleMenu {
         this.createMainBattleMenu();
         this.createMonsterAttackSubMenu();
         this.createPlayerInputCursor();
+
+        this.textAnimationSpeed = dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.OPTIONS_TEXT_SPEED
+        );
     }
 
     public get selectedAttack(): number | undefined {
@@ -172,8 +178,10 @@ export class BattleMenu {
             return;
         }
 
+        console.log("this.textAnimationSpeed: ", this.textAnimationSpeed);
+
         animateText(this.scene, this.battleTextGameObjectLine1, message, {
-            delay: 50,
+            delay: this.textAnimationSpeed,
             callback: () => {
                 this.waitingForPlayerInput = false;
                 if (callback) {
@@ -226,7 +234,7 @@ export class BattleMenu {
             this.battleTextGameObjectLine1,
             messageToDisplay,
             {
-                delay: 50,
+                delay: this.textAnimationSpeed,
                 callback: () => {
                     this.playerInputCursorAnimation();
                     this.waitingForPlayerInput = true;

@@ -42,6 +42,9 @@ export class BattleScene extends Scene {
         ) {
             this.skipAnimations = false;
         }
+
+        console.log("this.skipAnimations: ", this.skipAnimations);
+
     }
 
     create() {
@@ -87,10 +90,15 @@ export class BattleScene extends Scene {
         this.attackManager = new AttackManager(this, this.skipAnimations);
 
         this.controls = new Controls(this);
+        this.controls.lockInput = true;
     }
 
     update() {
         this.battleStateMachine.update();
+
+        if(this.controls.IsInputLocked){
+            return;
+        }
 
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         // limit input based on the current battle state we are in
@@ -289,6 +297,7 @@ export class BattleScene extends Scene {
                     this.activeEnemyMonster.playMonsterHealthBarAppearAnimation(
                         () => undefined
                     );
+                    this.controls.lockInput = false;
                     this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
                         [`wild ${this.activeEnemyMonster.name} appeared!`],
                         () => {

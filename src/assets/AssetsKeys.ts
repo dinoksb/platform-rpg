@@ -22,6 +22,7 @@ export const HEALTH_BAR_ASSET_KEYS = {
 
 export const UI_ASSET_KEYS = {
     CURSOR: "CURSOR",
+    MENU_BACKGROUND: "MENU_BACKGROUND",
 } as const;
 
 export const DATA_ASSET_KEYS = {
@@ -51,6 +52,12 @@ export const CHARACTER_ASSET_KEYS = {
     NPC: "NPC",
 } as const;
 
+export const TITLE_ASSET_KEYS = {
+    BACKGROUND: "BACKGROUND",
+    TITLE: "TITLE",
+    PANEL: "PANEL",
+} as const;
+
 export type BattleBackgroundAssetKey =
     (typeof BATTLE_BACKGROUND_ASSET_KEYS)[keyof typeof BATTLE_BACKGROUND_ASSET_KEYS];
 export type MonsterAssetKey =
@@ -68,6 +75,8 @@ export type WorldAssetKey =
     (typeof WORLD_ASSET_KEYS)[keyof typeof WORLD_ASSET_KEYS];
 export type CharactgerAssetKey =
     (typeof CHARACTER_ASSET_KEYS)[keyof typeof CHARACTER_ASSET_KEYS];
+export type TitleAssetKey =
+    (typeof TITLE_ASSET_KEYS)[keyof typeof TITLE_ASSET_KEYS];
 
 export type AssetKey =
     | BattleBackgroundAssetKey
@@ -78,4 +87,5 @@ export type AssetKey =
     | DataAssetKey
     | AttackAssetKey
     | WorldAssetKey
-    | CharactgerAssetKey;
+    | CharactgerAssetKey
+    | TitleAssetKey;

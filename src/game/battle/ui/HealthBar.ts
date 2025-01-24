@@ -29,21 +29,29 @@ export class HealthBar {
 
     public setMeterPercentageAnimated(
         percent: number,
-        options: { duration?: number; callback?: () => void }
+        options: {
+            duration?: number;
+            skipbattleAnimations?: boolean;
+            callback?: () => void;
+        }
     ) {
         const width = this.fullWidth * percent;
+
+        if (options?.skipbattleAnimations) {
+            this.setMeterPercentage(percent);
+            if (options?.callback) {
+                options.callback();
+            }
+            return;
+        }
 
         this.scene.tweens.add({
             targets: this.middle,
             displayWidth: width,
-            duration: options?.duration || 1000,
+            duration: options?.duration || options?.duration === 0 ? 0 : 1000,
             ease: Phaser.Math.Easing.Sine.Out,
             onUpdate: () => {
-                this.rightCap.x = this.middle.x + this.middle.displayWidth;
-                const isVisible = this.middle.displayWidth > 0;
-                this.leftCap.visible = isVisible;
-                this.middle.visible = isVisible;
-                this.rightCap.visible = isVisible;
+                this.updateHealthBarGameObjects();
             },
             onComplete: options?.callback,
         });
@@ -111,6 +119,14 @@ export class HealthBar {
         const width = this.fullWidth * percent;
 
         this.middle.displayWidth = width;
+        this.updateHealthBarGameObjects();
+    }
+
+    private updateHealthBarGameObjects() {
         this.rightCap.x = this.middle.x + this.middle.displayWidth;
+        const isVisible = this.middle.displayWidth > 0;
+        this.leftCap.visible = isVisible;
+        this.middle.visible = isVisible;
+        this.rightCap.visible = isVisible;
     }
 }

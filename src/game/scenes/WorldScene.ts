@@ -146,7 +146,7 @@ export class WorldScene extends Scene {
             this.handlePlayerInteraction();
         }
 
-        this.player.update(time);
+        this.player.update();
     }
 
     private handlePlayerMovementUpdate() {
@@ -206,8 +206,6 @@ export class WorldScene extends Scene {
     }
 
     private handlePlayerDirectionUpdate(){
-        console.log(('test'));
-        
         dataManager.getStore.set(
             DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
             this.player.getDirection

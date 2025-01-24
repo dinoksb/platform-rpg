@@ -81,7 +81,7 @@ export class Character {
         return this.idleFrameConfig[this.direction];
     }
 
-    public update(time: DOMHighResTimeStamp): void {
+    public update(): void {
         if (this.isMoving) {
             return;
         }

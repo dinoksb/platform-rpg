@@ -20,6 +20,7 @@ export interface CharacterConfig {
     spriteGridMovementFinishedCallback: () => void;
     idleFrameConfig: CharacterIdleFrameConfig;
     collisionLayer: Phaser.Tilemaps.TilemapLayer;
+    otherCharactersToCheckForCollisionsWith: Character[] | undefined;
     spriteChangedDirectionCallback: () => void;
 }
 
@@ -35,6 +36,7 @@ export class Character {
     protected origin: Coordinate;
     protected collisionLayer: Phaser.Tilemaps.TilemapLayer;
     protected spriteChangedDirectionCallback: () => void;
+    protected otherCharactersToCheckForCollisionsWith: Character[];
 
     constructor(config: CharacterConfig) {
         if (this.constructor === Character) {
@@ -51,6 +53,8 @@ export class Character {
         this.idleFrameConfig = config.idleFrameConfig;
         this.origin = config.origin ? { ...config.origin } : { x: 0, y: 0 };
         this.collisionLayer = config.collisionLayer;
+        this.otherCharactersToCheckForCollisionsWith =
+            config.otherCharactersToCheckForCollisionsWith || [];
         this.phaserGameObject = this.scene.add
             .sprite(
                 config.position.x,
@@ -113,12 +117,16 @@ export class Character {
         this.moveSprite(direction);
     }
 
+    public addCharacterToCheckForCollisionsWith(character: Character): void {
+        this.otherCharactersToCheckForCollisionsWith.push(character);
+    }
+
     public moveSprite(direction: Direction): void {
         const changedDirection = this.direction !== direction;
         this.direction = direction;
 
-        if(changedDirection){
-            if(this.spriteChangedDirectionCallback !== undefined){
+        if (changedDirection) {
+            if (this.spriteChangedDirectionCallback !== undefined) {
                 this.spriteChangedDirectionCallback();
             }
         }
@@ -143,7 +151,10 @@ export class Character {
                 this.direction
             );
 
-        return this.doesPositionCollideWithCollisionLayer(updatedPosition);
+        return (
+            this.doesPositionCollideWithCollisionLayer(updatedPosition) ||
+            this.doesPositionCollideWithOtherCharacter(updatedPosition)
+        );
     }
 
     private handleSpriteMovement(): void {
@@ -195,5 +206,25 @@ export class Character {
         const tile = this.collisionLayer.getTileAtWorldXY(x, y, true);
 
         return tile.index !== -1;
+    }
+
+    private doesPositionCollideWithOtherCharacter(
+        position: Coordinate
+    ): boolean {
+        const { x, y } = position;
+        if (this.otherCharactersToCheckForCollisionsWith.length === 0) {
+            return false;
+        }
+
+        const collidesWithACharacter =
+            this.otherCharactersToCheckForCollisionsWith.some((character) => {
+                return (
+                    (character.targetPosition.x === x &&
+                        character.targetPosition.y === y) ||
+                    (character.prevTargetPosition.x === x &&
+                        character.prevTargetPosition.y === y)
+                );
+            });
+        return collidesWithACharacter;
     }
 }

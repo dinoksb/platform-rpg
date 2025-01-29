@@ -56,7 +56,7 @@ export class DialogUI {
         return this.isVisible;
     }
 
-    public get getIsAnimationPlayer(){
+    public get getIsAnimationPlaying(){
         return this. textAnimationPlaying;
     }
 

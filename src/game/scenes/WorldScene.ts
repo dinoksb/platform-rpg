@@ -7,6 +7,24 @@ import { DIRECTION } from "../common/Direction";
 import { TILE_SIZE, TILED_COLLISION_LAYER_ALPHA } from "../../Config";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { DialogUI } from "../world/DialogUI";
+import { NPC } from "../world/characters/NPC";
+import { getTargetPositionFromGameObjectPositionAndDirection } from "../../utils/GridUtils";
+
+interface TiledObjectProperty {
+    name: string;
+    type: string;
+    value: any;
+}
+
+const CUSTOM_TILED_TYPE = {
+    NPC: "npc",
+} as const;
+
+const TILED_NPC_PROPERTY = {
+    IS_SPAWN_POINT: "is_spawn_point",
+    MESSAGES: "messages",
+    FRAME: "frame",
+} as const;
 
 export class WorldScene extends Scene {
     private player: Player;
@@ -15,6 +33,8 @@ export class WorldScene extends Scene {
     private whildMonsterEncountered: boolean;
     private dialogUI: DialogUI;
     private isShowStartMessage: boolean;
+    private npcs: NPC[];
+    private npcPlayerIsInteractingWith: NPC | undefined;
 
     constructor() {
         super({
@@ -25,6 +45,7 @@ export class WorldScene extends Scene {
 
     init() {
         this.whildMonsterEncountered = false;
+        this.npcPlayerIsInteractingWith = undefined;
     }
 
     create() {
@@ -94,6 +115,9 @@ export class WorldScene extends Scene {
 
         this.add.image(0, 0, WORLD_ASSET_KEYS.WORLD_BACKGROUND, 0).setOrigin(0);
 
+        // create npcs
+        this.createNPCs(map);
+
         this.player = new Player({
             scene: this,
             position: dataManager.getStore.get(
@@ -108,10 +132,15 @@ export class WorldScene extends Scene {
             },
             spriteChangedDirectionCallback: () => {
                 this.handlePlayerDirectionUpdate();
-            }
+            },
+            otherCharactersToCheckForCollisionsWith: this.npcs,
         });
-
         this.cameras.main.startFollow(this.player.getSprite);
+
+        // update our collisions with npcs
+        this.npcs.forEach((npc) => {
+            npc.addCharacterToCheckForCollisionsWith(this.player);
+        });
 
         // create foreground for depth
         this.add.image(0, 0, WORLD_ASSET_KEYS.WORLD_FOREGROUND, 0).setOrigin(0);
@@ -121,32 +150,43 @@ export class WorldScene extends Scene {
 
         this.controls = new Controls(this);
         this.cameras.main.fadeIn(1000, 0, 0, 0);
-        if(!this.isShowStartMessage){
-            this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE, () => {
-                this.dialogUI.showDialogModal(['Start an exciting journey with your monster!']);
-                this.isShowStartMessage = true;
-            });
+        if (!this.isShowStartMessage) {
+            this.cameras.main.once(
+                Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE,
+                () => {
+                    this.dialogUI.showDialogModal([
+                        "Start an exciting journey with your monster!",
+                    ]);
+                    this.isShowStartMessage = true;
+                }
+            );
         }
-        
-
     }
 
-    update(time: DOMHighResTimeStamp) {
+    update() {
         if (this.whildMonsterEncountered) {
-            this.player.update(time);
+            this.player.update();
             return;
         }
 
         const selectedDirection = this.controls.getDirectionKeyPressDown();
-        if (selectedDirection !== DIRECTION.NONE && !this.isPlayerInputLocked() && this.isShowStartMessage) {
+        if (
+            selectedDirection !== DIRECTION.NONE &&
+            !this.isPlayerInputLocked() &&
+            this.isShowStartMessage
+        ) {
             this.player.moveCharacter(selectedDirection);
-        } 
+        }
 
-        if(this.controls.wasSpaceKeyPressed() && !this.player.getIsMoving){
+        if (this.controls.wasSpaceKeyPressed() && !this.player.getIsMoving) {
             this.handlePlayerInteraction();
         }
 
         this.player.update();
+
+        this.npcs.forEach((npc) => {
+            npc.update();
+        });
     }
 
     private handlePlayerMovementUpdate() {
@@ -154,6 +194,11 @@ export class WorldScene extends Scene {
             x: this.player.getSprite.x,
             y: this.player.getSprite.y,
         });
+
+        dataManager.getStore.set(
+            DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
+            this.player.getDirection
+        );
 
         if (!this.encounterLayer) {
             return;
@@ -184,31 +229,106 @@ export class WorldScene extends Scene {
         }
     }
 
-    private handlePlayerInteraction(){
-        if(this.dialogUI.getIsAnimationPlayer){
+    private handlePlayerInteraction() {
+        if (this.dialogUI.getIsAnimationPlaying) {
             return;
         }
 
-        if(this.dialogUI.getIsVisible && !this.dialogUI.getMoreMessagesToShow){
+        if (
+            this.dialogUI.getIsVisible &&
+            !this.dialogUI.getMoreMessagesToShow
+        ) {
             this.dialogUI.hideDialogModal();
+            if(this.npcPlayerIsInteractingWith){
+                this.npcPlayerIsInteractingWith.isTalkingToPlayer = false;
+                this.npcPlayerIsInteractingWith = undefined;
+            }
             return;
         }
 
-        if(this.dialogUI.getIsVisible && this.dialogUI.getMoreMessagesToShow){
+        if (this.dialogUI.getIsVisible && this.dialogUI.getMoreMessagesToShow) {
             this.dialogUI.showNextMessage();
             return;
         }
 
+        const { x, y } = this.player.getSprite;
+        const targetPosition =
+            getTargetPositionFromGameObjectPositionAndDirection(
+                { x, y },
+                this.player.getDirection
+            );
+
+        const nearbyNpc = this.npcs.find((npc) => {
+            return (
+                npc.getSprite.x === targetPosition.x &&
+                npc.getSprite.y === targetPosition.y
+            );
+        });
+        if (nearbyNpc) {
+             nearbyNpc.facePlayer(this.player.getDirection);
+             nearbyNpc.isTalkingToPlayer = true;
+             this.npcPlayerIsInteractingWith = nearbyNpc;
+             this.dialogUI.showDialogModal(nearbyNpc.getMessages);
+            // this.#handleNpcInteraction();
+            return;
+        }
     }
 
-    private isPlayerInputLocked(){
+    private isPlayerInputLocked() {
         return this.dialogUI.getIsVisible;
     }
 
-    private handlePlayerDirectionUpdate(){
+    private handlePlayerDirectionUpdate() {
         dataManager.getStore.set(
             DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
             this.player.getDirection
         );
+    }
+
+    private createNPCs(map: Phaser.Tilemaps.Tilemap) {
+        this.npcs = [];
+
+        const npcLayers = map
+            .getObjectLayerNames()
+            .filter((layerName) => layerName.includes("NPC"));
+        npcLayers.forEach((layerName) => {
+            const layer = map.getObjectLayer(layerName);
+            const npcObject = layer?.objects.find((obj) => {
+                return obj.type === CUSTOM_TILED_TYPE.NPC;
+            });
+
+            if (
+                !npcObject ||
+                npcObject.x === undefined ||
+                npcObject.y === undefined
+            ) {
+                return;
+            }
+
+            const npcFrame =
+                npcObject.properties.find(
+                    (property: TiledObjectProperty) =>
+                        property.name === TILED_NPC_PROPERTY.FRAME
+                )?.value || "0";
+            const npcMessagesString =
+                npcObject.properties.find(
+                    (property: TiledObjectProperty) =>
+                        property.name === TILED_NPC_PROPERTY.MESSAGES
+                )?.value || "";
+            const npcMessages = npcMessagesString.split("::");
+
+            const npc = new NPC({
+                scene: this,
+                position: { x: npcObject.x, y: npcObject.y - TILE_SIZE },
+                direction: DIRECTION.DOWN,
+                frame: parseInt(npcFrame, 10),
+                messages: npcMessages,
+                otherCharactersToCheckForCollisionsWith: this.npcs,
+                spriteGridMovementFinishedCallback: () => {},
+                spriteChangedDirectionCallback: () => {},
+            });
+
+            this.npcs.push(npc);
+        });
     }
 }

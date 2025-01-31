@@ -4,10 +4,12 @@ export class Controls {
     private scene: Phaser.Scene;
     private cursorKeys: Phaser.Types.Input.Keyboard.CursorKeys;
     private lockPlayerInput: boolean;
+    private enterKey: Phaser.Input.Keyboard.Key | undefined;
 
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         this.cursorKeys = this.scene.input.keyboard!.createCursorKeys();
+        this.enterKey = this.scene.input.keyboard?.addKey(Phaser.Input.Keyboard.KeyCodes.ENTER);
         this.lockPlayerInput = false;
     }
 
@@ -24,6 +26,13 @@ export class Controls {
             return false;
         }
         return Phaser.Input.Keyboard.JustDown(this.cursorKeys.space);
+    }
+
+    public wasEnterKeyPressed(): boolean {
+        if (this.enterKey === undefined) {
+            return false;
+        }
+        return Phaser.Input.Keyboard.JustDown(this.enterKey);
     }
 
     public wasBackKeyPressed(): boolean {

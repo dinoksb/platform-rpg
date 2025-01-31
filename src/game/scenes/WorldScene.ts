@@ -4,11 +4,14 @@ import { WORLD_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { Player } from "../world/characters/Player";
 import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
-import { TILE_SIZE, TILED_COLLISION_LAYER_ALPHA } from "../../Config";
+import { BATTLE_ENCOUNTER_RATE, TILE_SIZE, TILED_COLLISION_LAYER_ALPHA } from "../../Config";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { DialogUI } from "../world/DialogUI";
 import { NPC } from "../world/characters/NPC";
 import { getTargetPositionFromGameObjectPositionAndDirection } from "../../utils/GridUtils";
+import { ToggleableCollisionLayer } from "../world/characters/Character";
+import { Menu } from "../battle/ui/menu/Menu";
+import { BaseScene } from "./BaseScene";
 
 interface TiledObjectProperty {
     name: string;
@@ -26,30 +29,34 @@ const TILED_NPC_PROPERTY = {
     FRAME: "frame",
 } as const;
 
-export class WorldScene extends Scene {
+export class WorldScene extends BaseScene {
     private player: Player;
-    private controls: Controls;
     private encounterLayer: Phaser.Tilemaps.TilemapLayer;
+    private toggleableLayers: ToggleableCollisionLayer[];
     private whildMonsterEncountered: boolean;
     private dialogUI: DialogUI;
     private isShowStartMessage: boolean;
     private npcs: NPC[];
     private npcPlayerIsInteractingWith: NPC | undefined;
+    private endingCondition: boolean
+    private menu: Menu;
 
     constructor() {
         super({
             key: SCENE_KEYS.WORLD_SCENE,
         });
         this.isShowStartMessage = false;
+        this.endingCondition = false;
     }
 
     init() {
+        super.init();
         this.whildMonsterEncountered = false;
-        this.npcPlayerIsInteractingWith = undefined;
+        this.npcPlayerIsInteractingWith = undefined;   
     }
 
     create() {
-        console.log(`[${WorldScene.name}:create] invoked`);
+        super.create();
 
         const x = 6 * TILE_SIZE;
         const y = 22 * TILE_SIZE;
@@ -86,6 +93,40 @@ export class WorldScene extends Scene {
             return;
         }
         collisionLayer.setAlpha(TILED_COLLISION_LAYER_ALPHA).setDepth(2);
+
+        const boulderCollisionTiles = map.addTilesetImage(
+            "boulder",
+            WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION
+        );
+        if (!boulderCollisionTiles) {
+            console.log(
+                `[${WorldScene.name}:create] encountered error while creating boulder collision tileset using data from tiled`
+            );
+            return;
+        }
+        const boulderCollisionLayer = map.createLayer(
+            "Boulder",
+            boulderCollisionTiles,
+            0,
+            0
+        );
+        if (!boulderCollisionLayer) {
+            console.log(
+                `[${WorldScene.name}:create] encountered error while creating boulder collision layer using data from tiled`
+            );
+            return;
+        }
+        boulderCollisionLayer.setAlpha(1).setDepth(2);
+        // boulderCollisionLayer.setCollision(9, true);
+
+        const toggleableLayers: ToggleableCollisionLayer[] = [
+            {
+                layer: boulderCollisionLayer,
+                name: WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION,
+                isCollisionEnabled: true,
+            },
+        ];
+        this.toggleableLayers = toggleableLayers;
 
         // map encounter zone
         const encounterTiles = map.addTilesetImage(
@@ -127,6 +168,7 @@ export class WorldScene extends Scene {
                 DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION
             ),
             collisionLayer: collisionLayer,
+            toggleableLayers: this.toggleableLayers,
             spriteGridMovementFinishedCallback: () => {
                 this.handlePlayerMovementUpdate();
             },
@@ -148,7 +190,6 @@ export class WorldScene extends Scene {
         // create dialog ui
         this.dialogUI = new DialogUI(this, 1280);
 
-        this.controls = new Controls(this);
         this.cameras.main.fadeIn(1000, 0, 0, 0);
         if (!this.isShowStartMessage) {
             this.cameras.main.once(
@@ -161,25 +202,79 @@ export class WorldScene extends Scene {
                 }
             );
         }
+
+        // create menu
+        this.menu = new Menu(this);
+
+        const battleCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT);
+        const battleEndCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_END_COUNT);
+
+        console.log('battleCount: ', battleCount);
+        console.log('battleEndCount: ', battleEndCount);
+        
+        if(battleCount >= battleEndCount){
+            this.endingCondition = true;
+            this.setCollisionEnabledForLayer(WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION, false);
+        }else{
+            this.setCollisionEnabledForLayer(WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION, true);
+        }
     }
 
     update() {
+        super.update();
+        
         if (this.whildMonsterEncountered) {
             this.player.update();
             return;
         }
 
-        const selectedDirection = this.controls.getDirectionKeyPressDown();
+        const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
+        const selectedDirectionHelDown = this.controls.getDirectionKeyPressDown();
+        const selectedDirectionPressedOnce = this.controls.getDirectionKeyJustPressed();
         if (
-            selectedDirection !== DIRECTION.NONE &&
+            selectedDirectionHelDown !== DIRECTION.NONE &&
             !this.isPlayerInputLocked() &&
             this.isShowStartMessage
         ) {
-            this.player.moveCharacter(selectedDirection);
+            this.player.moveCharacter(selectedDirectionHelDown);
         }
 
-        if (this.controls.wasSpaceKeyPressed() && !this.player.getIsMoving) {
+        if (wasSpaceKeyPressed && !this.player.getIsMoving && !this.menu.getIsVisible) {
             this.handlePlayerInteraction();
+        }
+
+        if (this.controls.wasEnterKeyPressed()) {
+            if(this.dialogUI.getIsVisible){
+                return;
+            }
+
+            if(this.menu.getIsVisible){
+                this.menu.hide();
+                return;
+            }
+
+            this.menu.show();
+        }
+
+        if(this.menu.getIsVisible){
+            if(selectedDirectionPressedOnce !== DIRECTION.NONE){
+                this.menu.handlePlayerInput(selectedDirectionPressedOnce);
+            }
+
+            if(wasSpaceKeyPressed){
+                this.menu.handlePlayerInput('OK');
+
+                if(this.menu.getSelectedMenuOption === 'MONSTERS'){
+
+                }
+                else if(this.menu.getSelectedMenuOption === 'EXIT'){
+                    this.menu.hide();
+                }
+            }
+
+            if(this.controls.wasBackKeyPressed()){
+                this.menu.hide();
+            }
         }
 
         this.player.update();
@@ -200,32 +295,8 @@ export class WorldScene extends Scene {
             this.player.getDirection
         );
 
-        if (!this.encounterLayer) {
-            return;
-        }
-
-        const { x, y } = this.player.getSprite;
-        const isInEncounterZone =
-            this.encounterLayer.getTileAtWorldXY(x, y, true).index !== -1;
-        if (!isInEncounterZone) {
-            return;
-        }
-
-        console.log(
-            `[${WorldScene.name}:handlePlayerMovementUpdate] player is in an encounter zone`
-        );
-        this.whildMonsterEncountered = Math.random() < 0.2;
-        if (this.whildMonsterEncountered) {
-            console.log(
-                `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster`
-            );
-            this.cameras.main.fadeOut(1000, 0, 0);
-            this.cameras.main.once(
-                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
-                () => {
-                    this.scene.start(SCENE_KEYS.BATTLE_SCENE);
-                }
-            );
+        if(this.endingCondition === false){
+            this.handleWildMonsterBattleEncounter();
         }
     }
 
@@ -239,7 +310,7 @@ export class WorldScene extends Scene {
             !this.dialogUI.getMoreMessagesToShow
         ) {
             this.dialogUI.hideDialogModal();
-            if(this.npcPlayerIsInteractingWith){
+            if (this.npcPlayerIsInteractingWith) {
                 this.npcPlayerIsInteractingWith.isTalkingToPlayer = false;
                 this.npcPlayerIsInteractingWith = undefined;
             }
@@ -265,17 +336,17 @@ export class WorldScene extends Scene {
             );
         });
         if (nearbyNpc) {
-             nearbyNpc.facePlayer(this.player.getDirection);
-             nearbyNpc.isTalkingToPlayer = true;
-             this.npcPlayerIsInteractingWith = nearbyNpc;
-             this.dialogUI.showDialogModal(nearbyNpc.getMessages);
+            nearbyNpc.facePlayer(this.player.getDirection);
+            nearbyNpc.isTalkingToPlayer = true;
+            this.npcPlayerIsInteractingWith = nearbyNpc;
+            this.dialogUI.showDialogModal(nearbyNpc.getMessages);
             // this.#handleNpcInteraction();
             return;
         }
     }
 
     private isPlayerInputLocked() {
-        return this.dialogUI.getIsVisible;
+        return this.controls.IsInputLocked || this.dialogUI.getIsVisible || this.menu.getIsVisible;
     }
 
     private handlePlayerDirectionUpdate() {
@@ -330,5 +401,57 @@ export class WorldScene extends Scene {
 
             this.npcs.push(npc);
         });
+    }
+
+    private handleWildMonsterBattleEncounter(){
+        if (!this.encounterLayer) {
+            return;
+        }
+
+        const { x, y } = this.player.getSprite;
+        const isInEncounterZone =
+            this.encounterLayer.getTileAtWorldXY(x, y, true).index !== -1;
+        if (!isInEncounterZone) {
+            return;
+        }
+
+        console.log(
+            `[${WorldScene.name}:handlePlayerMovementUpdate] player is in an encounter zone`
+        );
+
+        this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
+        if (this.whildMonsterEncountered) {
+            console.log(
+                `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster`
+            );
+            this.cameras.main.fadeOut(1000, 0, 0);
+            this.cameras.main.once(
+                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+                () => {
+                    this.scene.start(SCENE_KEYS.BATTLE_SCENE);
+                }
+            );
+        }
+    }
+
+    private setCollisionEnabledForLayer(layerName: string, enable: boolean) {
+        const found = this.toggleableLayers.find(
+            (layerInfo) => layerInfo.name === layerName
+        );
+        if (!found) {
+            console.warn(`No layer found with name: ${layerName}`);
+            return;
+        }
+
+        if(enable){
+            found.layer.setAlpha(1);
+        }else{
+            found.layer.setAlpha(0);
+        }
+        found.isCollisionEnabled = enable;
+        console.log(
+            `Layer [${layerName}] collision is now: `,
+            enable ? "ON" : "OFF"
+        );
     }
 }

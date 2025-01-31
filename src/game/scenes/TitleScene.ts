@@ -1,7 +1,7 @@
 import { TITLE_ASSET_KEYS, UI_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
-import { Controls } from "../../utils/Controls";
 import { NineSlice } from "../../utils/NineSlice";
+import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
 
 const PLAYER_INPUT_CURSOR_POSITION = {
@@ -17,9 +17,8 @@ export const MENU_TEXT_STYLE = {
 export type MenuTextStyle =
     (typeof Phaser.GameObjects.TextStyle)[keyof typeof Phaser.GameObjects.TextStyle];
 
-export class TitleScene extends Phaser.Scene {
+export class TitleScene extends BaseScene {
     private mainMenuCursorPhaserImageGameObject: Phaser.GameObjects.Image;
-    private controls: Controls;
     private nineSliceMenu: NineSlice;
 
     constructor() {
@@ -29,7 +28,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     init() {
-        console.log(`[${TitleScene.name}:init] invoked`);
+        super.init();
 
         this.nineSliceMenu = new NineSlice({
             cornerCutSize: 32,
@@ -39,7 +38,7 @@ export class TitleScene extends Phaser.Scene {
     }
 
     create() {
-        console.log(`[${TitleScene.name}:create] invoked`);
+        super.create();
 
         // create background and title
         this.add
@@ -105,11 +104,15 @@ export class TitleScene extends Phaser.Scene {
                 this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );
-
-        this.controls = new Controls(this);
     }
 
     update() {
+        super.update();
+
+        if(this.controls.IsInputLocked){
+            return;
+        }
+        
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         if (wasSpaceKeyPressed) {
             this.cameras.main.fadeOut(500, 0, 0, 0);

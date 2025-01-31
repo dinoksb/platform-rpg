@@ -13,6 +13,10 @@ interface GlobalState {
         };
         direction: Direction;
     };
+    battleOptions:{
+        battleCount: number;
+        battleEndCount: number;
+    };
     options: {
         battleSceneAnimations: BattleSceneOptions;
         textSpeed: number;
@@ -27,6 +31,10 @@ const initialState: GlobalState = {
         },
         direction: DIRECTION.DOWN,
     },
+    battleOptions:{
+        battleCount: 0,
+        battleEndCount: 2,
+    },
     options: {
         battleSceneAnimations: BATTLE_SCENE_OPTIONS.OFF,
         textSpeed: TEXT_SPEED.FAST,
@@ -36,6 +44,8 @@ const initialState: GlobalState = {
 export const DATA_MANAGER_STORE_KEYS = {
     PLAYER_POSITION: "PLAYER_POSITION",
     PLAYER_DIRECTION: "PLAYER_DIRECTION",
+    BATTLE_OPTIONS_BATTLE_COUNT: "BATTLE_OPTIONS_BATTLE_COUNT",
+    BATTLE_OPTIONS_BATTLE_END_COUNT: "BATTLE_OPTIONS_BATTLE_END_COUNT",
     OPTIONS_BATTLE_SCENE_ANIMATIONS: "OPTIONS_BATTLE_SCENE_ANIMATIONS",
     OPTIONS_TEXT_SPEED: "OPTIONS_TEXT_SPEED",
 } as const;
@@ -56,6 +66,8 @@ class DataManager extends Phaser.Events.EventEmitter {
         this.store.set({
             [DATA_MANAGER_STORE_KEYS.PLAYER_POSITION]: data.player.position,
             [DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION]: data.player.direction,
+            [DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT]: data.battleOptions.battleCount,
+            [DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_END_COUNT]: data.battleOptions.battleEndCount,
             [DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS]:
                 data.options.battleSceneAnimations,
             [DATA_MANAGER_STORE_KEYS.OPTIONS_TEXT_SPEED]:

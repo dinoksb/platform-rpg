@@ -13,8 +13,9 @@ import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { BATTLE_SCENE_OPTIONS } from "../common/Options";
+import { BaseScene } from "./BaseScene";
 
-export class BattleScene extends Scene {
+export class BattleScene extends BaseScene {
     private battleMenu: BattleMenu;
     private controls: Controls;
     private activePlayerMonster: PlayerBattleMonster;
@@ -31,6 +32,8 @@ export class BattleScene extends Scene {
     }
 
     init() {
+        super.init();
+
         this.activePlayerAttackIndex = -1;
         this.skipAnimations = true;
         const chosenBattleSceneOption = dataManager.getStore.get(
@@ -48,7 +51,8 @@ export class BattleScene extends Scene {
     }
 
     create() {
-        console.log(`[${BattleScene.name}:create] invoked`);
+        super.create();
+
         // create main background
         const background = new Background(this);
         background.showForest();
@@ -89,11 +93,12 @@ export class BattleScene extends Scene {
         this.createBattleStateMachine();
         this.attackManager = new AttackManager(this, this.skipAnimations);
 
-        this.controls = new Controls(this);
         this.controls.lockInput = true;
     }
 
     update() {
+        super.update();
+        
         this.battleStateMachine.update();
 
         if(this.controls.IsInputLocked){
@@ -370,6 +375,10 @@ export class BattleScene extends Scene {
         this.battleStateMachine.addState({
             name: BATTLE_STATES.FINISHED,
             onEnter: () => {
+                const battleCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT);
+                dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT, battleCount + 1);
+                console.log(dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT));
+                
                 this.transitionToNextScene();
             },
         });

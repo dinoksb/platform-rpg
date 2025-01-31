@@ -22,7 +22,12 @@ export const HEALTH_BAR_ASSET_KEYS = {
 
 export const UI_ASSET_KEYS = {
     CURSOR: "CURSOR",
+    CURSOR_WHITE: "CURSOR_WHITE",
     MENU_BACKGROUND: "MENU_BACKGROUND",
+    MENU_BACKGROUND_GREEN: "MENU_BACKGROUND_GREEN",
+    MENU_BACKGROUND_PURPLE: "MENU_BACKGROUND_PURPLE",
+    BLUE_BUTTON: "BLUE_BUTTON",
+    BLUE_BUTTON_SELECTED: "BLUE_BUTTON_SELECTED"
 } as const;
 
 export const DATA_ASSET_KEYS = {
@@ -44,6 +49,7 @@ export const WORLD_ASSET_KEYS = {
     WORLD_FOREGROUND: "WORLD_FOREGROUND",
     WORLD_MAIN_LEVEL: "WORLD_MAIN_LEVEL",
     WORLD_COLLISION: "WORLD_COLLISION",
+    WORLD_BOULDER_COLLISION: "WORLD_BOULDER_COLLISION",
     WORLD_ENCOUNTER_ZONE: "WORLD_ENCOUNTER_ZONE",
 } as const;
 
@@ -56,6 +62,11 @@ export const TITLE_ASSET_KEYS = {
     BACKGROUND: "BACKGROUND",
     TITLE: "TITLE",
     PANEL: "PANEL",
+} as const;
+
+export const MONSTER_PARTY_ASSET_KEYS = {
+    PARTY_BACKGROUND: "PARTY_BACKGROUND",
+    MONSTER_DETAILS_BACKGROUND: "MONSTER_DETAILS_BACKGROUND",
 } as const;
 
 export type BattleBackgroundAssetKey =
@@ -77,6 +88,8 @@ export type CharactgerAssetKey =
     (typeof CHARACTER_ASSET_KEYS)[keyof typeof CHARACTER_ASSET_KEYS];
 export type TitleAssetKey =
     (typeof TITLE_ASSET_KEYS)[keyof typeof TITLE_ASSET_KEYS];
+    export type MonsterPartyAssetKey =
+    (typeof MONSTER_PARTY_ASSET_KEYS)[keyof typeof MONSTER_PARTY_ASSET_KEYS];
 
 export type AssetKey =
     | BattleBackgroundAssetKey
@@ -88,4 +101,5 @@ export type AssetKey =
     | AttackAssetKey
     | WorldAssetKey
     | CharactgerAssetKey
-    | TitleAssetKey;
+    | TitleAssetKey
+    | MonsterPartyAssetKey;

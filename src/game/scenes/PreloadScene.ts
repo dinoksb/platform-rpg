@@ -1,4 +1,3 @@
-import { Scene } from "phaser";
 import {
     ATTACK_ASSET_KEYS,
     BATTLE_ASSET_KEYS,
@@ -7,6 +6,7 @@ import {
     DATA_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
+    MONSTER_PARTY_ASSET_KEYS,
     TITLE_ASSET_KEYS,
     UI_ASSET_KEYS,
     WORLD_ASSET_KEYS,
@@ -16,8 +16,9 @@ import { WebFontFileLoader } from "../../assets/WebFontFileLoader";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DataUtils } from "../../utils/DataUtils";
 import { Animation } from "../interfaces/MonsterTypeDef";
+import { BaseScene } from "./BaseScene";
 
-export class PreloadScene extends Scene {
+export class PreloadScene extends BaseScene {
     constructor() {
         super({
             key: SCENE_KEYS.PRELOAD_SCENE,
@@ -25,7 +26,7 @@ export class PreloadScene extends Scene {
     }
 
     preload() {
-        console.log(`[${PreloadScene.name}:preload] invoked`);
+        super.preload();
         const monsterTamerAssetsPath = "assets/images/monster-tamer";
         const kenneysAssetPath = "assets/images/kenneys-assets";
         const pimenAssetPath = "assets/images/pimen";
@@ -92,8 +93,20 @@ export class PreloadScene extends Scene {
             `${monsterTamerAssetsPath}/ui/cursor.png`
         );
         this.load.image(
+            UI_ASSET_KEYS.CURSOR_WHITE,
+            `${monsterTamerAssetsPath}/ui/cursor_white.png`
+        );
+        this.load.image(
             UI_ASSET_KEYS.MENU_BACKGROUND,
             `${kenneysAssetPath}/ui-space-expansion/glassPanel.png`
+        );
+        this.load.image(
+            UI_ASSET_KEYS.BLUE_BUTTON,
+            `${kenneysAssetPath}/ui-pack/blue_button01.png`
+        );
+        this.load.image(
+            UI_ASSET_KEYS.BLUE_BUTTON_SELECTED,
+            `${kenneysAssetPath}/ui-pack/blue_button00.png`
         );
 
         // load json data
@@ -159,9 +172,13 @@ export class PreloadScene extends Scene {
             WORLD_ASSET_KEYS.WORLD_COLLISION,
             `${monsterTamerAssetsPath}/map/collision.png`
         );
+        this.load.image(
+            WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION,
+            `${monsterTamerAssetsPath}/map/boulder.png`
+        );
         this.load.tilemapTiledJSON(
             WORLD_ASSET_KEYS.WORLD_MAIN_LEVEL,
-            `assets/data/level.json`
+            `assets/data/platform_rpg_town_level.json`
         );
         this.load.image(
             WORLD_ASSET_KEYS.WORLD_ENCOUNTER_ZONE,
@@ -190,12 +207,16 @@ export class PreloadScene extends Scene {
         this.load.image(TITLE_ASSET_KEYS.BACKGROUND, `${monsterTamerAssetsPath}/ui/title/background.png`);
         this.load.image(TITLE_ASSET_KEYS.PANEL, `${monsterTamerAssetsPath}/ui/title/title_background.png`);
         this.load.image(TITLE_ASSET_KEYS.TITLE, `${monsterTamerAssetsPath}/ui/title/title_text.png`);
+
+        // ui components for monster party
+        this.load.image(MONSTER_PARTY_ASSET_KEYS.PARTY_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/background.png`);
+        this.load.image(MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/monster-details-background.png`);
     }
 
     create() {
-        console.log(`[${PreloadScene.name}:create] invoked`);
+        super.create();
         this.createAnimations();
-        this.scene.start(SCENE_KEYS.TITLE_SCENE);
+        this.scene.start(SCENE_KEYS.MONSTER_PARTY_SCENE);
     }
 
     private createAnimations() {

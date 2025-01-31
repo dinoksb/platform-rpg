@@ -3,6 +3,12 @@ import { exhaustiveGuard } from "../../../utils/Guard";
 import { DIRECTION, Direction } from "../../common/Direction";
 import { Coordinate } from "../../interfaces/Coordinate";
 
+export interface ToggleableCollisionLayer {
+    layer: Phaser.Tilemaps.TilemapLayer;
+    name: string;
+    isCollisionEnabled: boolean;
+  }
+
 export interface CharacterIdleFrameConfig {
     LEFT: number;
     RIGHT: number;
@@ -20,6 +26,7 @@ export interface CharacterConfig {
     spriteGridMovementFinishedCallback: () => void;
     idleFrameConfig: CharacterIdleFrameConfig;
     collisionLayer: Phaser.Tilemaps.TilemapLayer;
+    toggleableLayers?: ToggleableCollisionLayer[];
     otherCharactersToCheckForCollisionsWith: Character[] | undefined;
     spriteChangedDirectionCallback: () => void;
 }
@@ -34,7 +41,8 @@ export class Character {
     protected spriteGridMovementFinishedCallback: () => void;
     protected idleFrameConfig: CharacterIdleFrameConfig;
     protected origin: Coordinate;
-    protected collisionLayer: Phaser.Tilemaps.TilemapLayer;
+    protected collisionLayer?: Phaser.Tilemaps.TilemapLayer;
+    protected toggleableLayers?: ToggleableCollisionLayer[];
     protected spriteChangedDirectionCallback: () => void;
     protected otherCharactersToCheckForCollisionsWith: Character[];
 
@@ -53,6 +61,7 @@ export class Character {
         this.idleFrameConfig = config.idleFrameConfig;
         this.origin = config.origin ? { ...config.origin } : { x: 0, y: 0 };
         this.collisionLayer = config.collisionLayer;
+        this.toggleableLayers = config.toggleableLayers || [];
         this.otherCharactersToCheckForCollisionsWith =
             config.otherCharactersToCheckForCollisionsWith || [];
         this.phaserGameObject = this.scene.add
@@ -203,9 +212,29 @@ export class Character {
         }
 
         const { x, y } = position;
-        const tile = this.collisionLayer.getTileAtWorldXY(x, y, true);
 
-        return tile.index !== -1;
+        if (this.collisionLayer) {
+            const tile = this.collisionLayer.getTileAtWorldXY(x, y, true);
+            if (tile && tile.index !== -1) {
+                return true;
+            }
+        }
+
+        if(this.toggleableLayers === undefined){
+            return false;
+        }
+
+        for (const toggleLayer of this.toggleableLayers) {
+            if (!toggleLayer.isCollisionEnabled) {
+                continue;
+            }
+            const tile = toggleLayer.layer.getTileAtWorldXY(x, y, true);
+            if (tile && tile.index !== -1) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private doesPositionCollideWithOtherCharacter(

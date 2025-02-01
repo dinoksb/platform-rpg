@@ -4,7 +4,7 @@ import { Attack, Animation } from "../game/interfaces/MonsterTypeDef";
 export class DataUtils {
     public static getMonsterAttack(
         scene: Phaser.Scene,
-        attackId: string
+        attackId: number
     ): Attack | undefined {
         const data = scene.cache.json.get(DATA_ASSET_KEYS.ATTACKS) as Attack[];
         return data.find((attack) => attack.id === Number(attackId));

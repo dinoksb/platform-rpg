@@ -216,7 +216,7 @@ export class PreloadScene extends BaseScene {
     create() {
         super.create();
         this.createAnimations();
-        this.scene.start(SCENE_KEYS.MONSTER_PARTY_SCENE);
+        this.scene.start(SCENE_KEYS.WORLD_SCENE);
     }
 
     private createAnimations() {

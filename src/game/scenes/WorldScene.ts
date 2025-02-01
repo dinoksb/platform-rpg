@@ -1,8 +1,6 @@
-import { Scene } from "phaser";
 import { SCENE_KEYS } from "./SceneKeys";
 import { WORLD_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { Player } from "../world/characters/Player";
-import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
 import {
     BATTLE_ENCOUNTER_RATE,
@@ -53,8 +51,8 @@ export class WorldScene extends BaseScene {
         this.endingCondition = false;
     }
 
-    init() {
-        super.init();
+    init(data) {
+        super.init(data);
         this.whildMonsterEncountered = false;
         this.npcPlayerIsInteractingWith = undefined;
     }
@@ -197,15 +195,13 @@ export class WorldScene extends BaseScene {
         // create menu
         this.menu = new Menu(this);
 
+        // load data from dataManager
         const battleCount = dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
         );
         const battleEndCount = dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_END_COUNT
         );
-
-        console.log("battleCount: ", battleCount);
-        console.log("battleEndCount: ", battleEndCount);
 
         if (battleCount >= battleEndCount) {
             this.endingCondition = true;
@@ -285,6 +281,11 @@ export class WorldScene extends BaseScene {
                 this.menu.handlePlayerInput("OK");
 
                 if (this.menu.getSelectedMenuOption === "MONSTERS") {
+                    const sceneDataToPass = {
+                        previousSceneName: SCENE_KEYS.WORLD_SCENE,
+                    }
+                    this.scene.launch(SCENE_KEYS.MONSTER_PARTY_SCENE, sceneDataToPass);
+                    this.scene.pause();
                 } else if (this.menu.getSelectedMenuOption === "EXIT") {
                     this.menu.hide();
                 }
@@ -365,7 +366,7 @@ export class WorldScene extends BaseScene {
 
     private isPlayerInputLocked() {
         return (
-            this.controls.IsInputLocked ||
+            this.controls.isInputLocked ||
             this.dialogUI.getIsVisible ||
             this.menu.getIsVisible
         );

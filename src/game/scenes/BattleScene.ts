@@ -64,7 +64,7 @@ export class BattleScene extends BaseScene {
                 assetFrame: 0,
                 currentHp: 25,
                 maxHp: 25,
-                attackIds: ["1"],
+                attackIds: [1],
                 baseAttack: 5,
                 currentLevel: 5,
             },

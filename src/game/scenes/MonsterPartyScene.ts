@@ -13,7 +13,7 @@ import { Monster } from "../interfaces/MonsterTypeDef";
 import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
 
-export const UI_TEXT_STYLE = {
+const UI_TEXT_STYLE = {
     fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
     color: "#FFFFFF",
     fontSize: "24px",
@@ -46,6 +46,7 @@ export class MonsterPartyScene extends BaseScene {
     private waitingForInput: boolean;
     private monsterToBeMovedIndex: number | undefined;
     private monsterContainers: Phaser.GameObjects.Container[];
+    private sceneData;
 
     constructor() {
         super({
@@ -53,9 +54,12 @@ export class MonsterPartyScene extends BaseScene {
         });
     }
 
-    init(): void {
-        super.init();
+    init(data): void {
+        super.init(data);
 
+        console.log(data);
+
+        this.sceneData = data;
         this.monsterPartyBackgrounds = [];
         this.healthBars = [];
         this.healthBarsTextGameObjects = [];
@@ -73,6 +77,7 @@ export class MonsterPartyScene extends BaseScene {
         super.create();
 
         // create custom background
+        this.add.rectangle(0, 0, this.scale.width, this.scale.height, 0x000000, 1).setOrigin(0);
         this.add
             .tileSprite(
                 0,
@@ -192,18 +197,19 @@ export class MonsterPartyScene extends BaseScene {
                 return;
             }
 
-            if (this.isMovingMonster) {
-                // make sure we select a different monster
-                if (
-                    this.selectedPartyMonsterIndex ===
-                    this.monsterToBeMovedIndex
-                ) {
-                    return;
-                }
+            this.moveMonsters();
+            // if (this.isMovingMonster) {
+            //     // make sure we select a different monster
+            //     if (
+            //         this.selectedPartyMonsterIndex ===
+            //         this.monsterToBeMovedIndex
+            //     ) {
+            //         return;
+            //     }
 
-                // this.moveMonsters();
-                return;
-            }
+            //     this.moveMonsters();
+            //     return;
+            // }
 
             // this.menu.show();
             return;
@@ -341,9 +347,22 @@ export class MonsterPartyScene extends BaseScene {
         return container;
     }
 
+    private moveMonsters(): void{
+        this.controls.lockInput = true;
+        const sceneDataToPass ={
+            monster: this.monsters[this.selectedPartyMonsterIndex]
+        };
+        this.scene.launch(SCENE_KEYS.MONSTER_DETAILS_SCENE, sceneDataToPass);
+        this.scene.pause(SCENE_KEYS.MONSTER_PARTY_SCENE)
+    }
+
     private goBackToPreviousScene(): void {
         this.controls.lockInput = true;
-        this.scene.start(SCENE_KEYS.WORLD_SCENE);
+        const sceneDataToPass = {
+            previousSceneName: SCENE_KEYS.WORLD_SCENE,
+        }
+        this.scene.stop(SCENE_KEYS.MONSTER_PARTY_SCENE);
+        this.scene.resume(this.sceneData.previousSceneName);
     }
 
     private movePlayerInputCursor(direction: Direction): void {

@@ -56,7 +56,7 @@ const initialState: GlobalState = {
                 assetFrame: 0,
                 currentHp: 25,
                 maxHp: 25,
-                attackIds: ["2"],
+                attackIds: [2],
                 baseAttack: 15,
                 currentLevel: 5,
             },

@@ -17,7 +17,7 @@ export interface Monster {
     maxHp: number;
     currentHp: number;
     baseAttack: number;
-    attackIds: string[];
+    attackIds: number[];
 }
 
 export interface Attack {

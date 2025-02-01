@@ -4,7 +4,11 @@ import { WORLD_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { Player } from "../world/characters/Player";
 import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
-import { BATTLE_ENCOUNTER_RATE, TILE_SIZE, TILED_COLLISION_LAYER_ALPHA } from "../../Config";
+import {
+    BATTLE_ENCOUNTER_RATE,
+    TILE_SIZE,
+    TILED_COLLISION_LAYER_ALPHA,
+} from "../../Config";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { DialogUI } from "../world/DialogUI";
 import { NPC } from "../world/characters/NPC";
@@ -38,7 +42,7 @@ export class WorldScene extends BaseScene {
     private isShowStartMessage: boolean;
     private npcs: NPC[];
     private npcPlayerIsInteractingWith: NPC | undefined;
-    private endingCondition: boolean
+    private endingCondition: boolean;
     private menu: Menu;
 
     constructor() {
@@ -52,7 +56,7 @@ export class WorldScene extends BaseScene {
     init() {
         super.init();
         this.whildMonsterEncountered = false;
-        this.npcPlayerIsInteractingWith = undefined;   
+        this.npcPlayerIsInteractingWith = undefined;
     }
 
     create() {
@@ -190,6 +194,32 @@ export class WorldScene extends BaseScene {
         // create dialog ui
         this.dialogUI = new DialogUI(this, 1280);
 
+        // create menu
+        this.menu = new Menu(this);
+
+        const battleCount = dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
+        );
+        const battleEndCount = dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_END_COUNT
+        );
+
+        console.log("battleCount: ", battleCount);
+        console.log("battleEndCount: ", battleEndCount);
+
+        if (battleCount >= battleEndCount) {
+            this.endingCondition = true;
+            this.setCollisionEnabledForLayer(
+                WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION,
+                false
+            );
+        } else {
+            this.setCollisionEnabledForLayer(
+                WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION,
+                true
+            );
+        }
+
         this.cameras.main.fadeIn(1000, 0, 0, 0);
         if (!this.isShowStartMessage) {
             this.cameras.main.once(
@@ -202,35 +232,21 @@ export class WorldScene extends BaseScene {
                 }
             );
         }
-
-        // create menu
-        this.menu = new Menu(this);
-
-        const battleCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT);
-        const battleEndCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_END_COUNT);
-
-        console.log('battleCount: ', battleCount);
-        console.log('battleEndCount: ', battleEndCount);
-        
-        if(battleCount >= battleEndCount){
-            this.endingCondition = true;
-            this.setCollisionEnabledForLayer(WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION, false);
-        }else{
-            this.setCollisionEnabledForLayer(WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION, true);
-        }
     }
 
     update() {
         super.update();
-        
+
         if (this.whildMonsterEncountered) {
             this.player.update();
             return;
         }
 
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
-        const selectedDirectionHelDown = this.controls.getDirectionKeyPressDown();
-        const selectedDirectionPressedOnce = this.controls.getDirectionKeyJustPressed();
+        const selectedDirectionHelDown =
+            this.controls.getDirectionKeyPressDown();
+        const selectedDirectionPressedOnce =
+            this.controls.getDirectionKeyJustPressed();
         if (
             selectedDirectionHelDown !== DIRECTION.NONE &&
             !this.isPlayerInputLocked() &&
@@ -239,16 +255,20 @@ export class WorldScene extends BaseScene {
             this.player.moveCharacter(selectedDirectionHelDown);
         }
 
-        if (wasSpaceKeyPressed && !this.player.getIsMoving && !this.menu.getIsVisible) {
+        if (
+            wasSpaceKeyPressed &&
+            !this.player.getIsMoving &&
+            !this.menu.getIsVisible
+        ) {
             this.handlePlayerInteraction();
         }
 
         if (this.controls.wasEnterKeyPressed()) {
-            if(this.dialogUI.getIsVisible){
+            if (this.dialogUI.getIsVisible) {
                 return;
             }
 
-            if(this.menu.getIsVisible){
+            if (this.menu.getIsVisible) {
                 this.menu.hide();
                 return;
             }
@@ -256,23 +276,21 @@ export class WorldScene extends BaseScene {
             this.menu.show();
         }
 
-        if(this.menu.getIsVisible){
-            if(selectedDirectionPressedOnce !== DIRECTION.NONE){
+        if (this.menu.getIsVisible) {
+            if (selectedDirectionPressedOnce !== DIRECTION.NONE) {
                 this.menu.handlePlayerInput(selectedDirectionPressedOnce);
             }
 
-            if(wasSpaceKeyPressed){
-                this.menu.handlePlayerInput('OK');
+            if (wasSpaceKeyPressed) {
+                this.menu.handlePlayerInput("OK");
 
-                if(this.menu.getSelectedMenuOption === 'MONSTERS'){
-
-                }
-                else if(this.menu.getSelectedMenuOption === 'EXIT'){
+                if (this.menu.getSelectedMenuOption === "MONSTERS") {
+                } else if (this.menu.getSelectedMenuOption === "EXIT") {
                     this.menu.hide();
                 }
             }
 
-            if(this.controls.wasBackKeyPressed()){
+            if (this.controls.wasBackKeyPressed()) {
                 this.menu.hide();
             }
         }
@@ -295,7 +313,7 @@ export class WorldScene extends BaseScene {
             this.player.getDirection
         );
 
-        if(this.endingCondition === false){
+        if (this.endingCondition === false) {
             this.handleWildMonsterBattleEncounter();
         }
     }
@@ -346,7 +364,11 @@ export class WorldScene extends BaseScene {
     }
 
     private isPlayerInputLocked() {
-        return this.controls.IsInputLocked || this.dialogUI.getIsVisible || this.menu.getIsVisible;
+        return (
+            this.controls.IsInputLocked ||
+            this.dialogUI.getIsVisible ||
+            this.menu.getIsVisible
+        );
     }
 
     private handlePlayerDirectionUpdate() {
@@ -403,7 +425,7 @@ export class WorldScene extends BaseScene {
         });
     }
 
-    private handleWildMonsterBattleEncounter(){
+    private handleWildMonsterBattleEncounter() {
         if (!this.encounterLayer) {
             return;
         }
@@ -443,9 +465,9 @@ export class WorldScene extends BaseScene {
             return;
         }
 
-        if(enable){
+        if (enable) {
             found.layer.setAlpha(1);
-        }else{
+        } else {
             found.layer.setAlpha(0);
         }
         found.isCollisionEnabled = enable;

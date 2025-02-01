@@ -1,5 +1,6 @@
 import { TITLE_ASSET_KEYS, UI_ASSET_KEYS } from "../../assets/AssetsKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
+import { dataManager } from "../../utils/DataManager";
 import { NineSlice } from "../../utils/NineSlice";
 import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
@@ -101,6 +102,7 @@ export class TitleScene extends BaseScene {
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
+                dataManager.startGame();
                 this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );

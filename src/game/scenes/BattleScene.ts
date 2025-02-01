@@ -1,4 +1,3 @@
-import { Scene } from "phaser";
 import { SCENE_KEYS } from "./SceneKeys";
 import { BattleMenu } from "../battle/ui/menu/BattleMenu";
 import { Background } from "../battle/Background";
@@ -9,7 +8,6 @@ import { StateMachine } from "../../utils/StateMachine";
 import { BATTLE_STATES } from "../battle/states/BattleStates";
 import { ATTACK_TARGET, AttackManager } from "../battle/attacks/AttackManager";
 import { createSceneTransition } from "../../utils/SceneTransition";
-import { Controls } from "../../utils/Controls";
 import { DIRECTION } from "../common/Direction";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { BATTLE_SCENE_OPTIONS } from "../common/Options";
@@ -17,7 +15,6 @@ import { BaseScene } from "./BaseScene";
 
 export class BattleScene extends BaseScene {
     private battleMenu: BattleMenu;
-    private controls: Controls;
     private activePlayerMonster: PlayerBattleMonster;
     private activeEnemyMonster: EnemyBattleMonster;
     private activePlayerAttackIndex: number;
@@ -47,7 +44,6 @@ export class BattleScene extends BaseScene {
         }
 
         console.log("this.skipAnimations: ", this.skipAnimations);
-
     }
 
     create() {
@@ -61,6 +57,8 @@ export class BattleScene extends BaseScene {
         this.activeEnemyMonster = new EnemyBattleMonster({
             scene: this,
             monsterDetails: {
+                id: 2,
+                monsterId: 2,
                 name: MONSTER_ASSET_KEYS.CARNODUSK,
                 assetKey: MONSTER_ASSET_KEYS.CARNODUSK,
                 assetFrame: 0,
@@ -75,16 +73,9 @@ export class BattleScene extends BaseScene {
 
         this.activePlayerMonster = new PlayerBattleMonster({
             scene: this,
-            monsterDetails: {
-                name: MONSTER_ASSET_KEYS.IGUANIGNITE,
-                assetKey: MONSTER_ASSET_KEYS.IGUANIGNITE,
-                assetFrame: 0,
-                currentHp: 25,
-                maxHp: 25,
-                attackIds: ["2"],
-                baseAttack: 15,
-                currentLevel: 5,
-            },
+            monsterDetails: dataManager.getStore.get(
+                DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+            )[0],
             skipBattleAnimation: this.skipAnimations,
         });
 
@@ -98,10 +89,10 @@ export class BattleScene extends BaseScene {
 
     update() {
         super.update();
-        
+
         this.battleStateMachine.update();
 
-        if(this.controls.IsInputLocked){
+        if (this.controls.isInputLocked) {
             return;
         }
 
@@ -375,10 +366,19 @@ export class BattleScene extends BaseScene {
         this.battleStateMachine.addState({
             name: BATTLE_STATES.FINISHED,
             onEnter: () => {
-                const battleCount = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT);
-                dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT, battleCount + 1);
-                console.log(dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT));
-                
+                const battleCount = dataManager.getStore.get(
+                    DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
+                );
+                dataManager.getStore.set(
+                    DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT,
+                    battleCount + 1
+                );
+                console.log(
+                    dataManager.getStore.get(
+                        DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
+                    )
+                );
+
                 this.transitionToNextScene();
             },
         });

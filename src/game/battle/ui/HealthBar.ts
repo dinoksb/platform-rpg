@@ -12,9 +12,9 @@ export class HealthBar {
     private middleShadow: Phaser.GameObjects.Image;
     private rightShadowCap: Phaser.GameObjects.Image;
 
-    constructor(scene: Phaser.Scene, x: number, y: number) {
+    constructor(scene: Phaser.Scene, x: number, y: number, width: number= 360) {
         this.scene = scene;
-        this.fullWidth = 360;
+        this.fullWidth = width;
         this.scaleY = 0.7;
 
         this.healthBarContainer = this.scene.add.container(x, y, []);

@@ -13,7 +13,7 @@ export class Controls {
         this.lockPlayerInput = false;
     }
 
-    public get IsInputLocked() {
+    public get isInputLocked() {
         return this.lockPlayerInput;
     }
 

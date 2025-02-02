@@ -19,10 +19,7 @@ const UI_TEXT_STYLE = {
     fontSize: "24px",
 } as const;
 
-export type UITextStyle =
-    (typeof Phaser.GameObjects.TextStyle)[keyof typeof Phaser.GameObjects.TextStyle];
-
-export const MONSTER_PARTY_POSITIONS = {
+const MONSTER_PARTY_POSITIONS = {
     EVEN: {
         x: 0,
         y: 10,
@@ -33,6 +30,11 @@ export const MONSTER_PARTY_POSITIONS = {
     },
     increment: 150,
 } as const;
+
+interface MonsterPartySceneData {
+    previousSceneName: string;
+}
+
 
 export class MonsterPartyScene extends BaseScene {
     private monsterPartyBackgrounds: Phaser.GameObjects.Image[];
@@ -46,7 +48,7 @@ export class MonsterPartyScene extends BaseScene {
     private waitingForInput: boolean;
     private monsterToBeMovedIndex: number | undefined;
     private monsterContainers: Phaser.GameObjects.Container[];
-    private sceneData;
+    private sceneData: MonsterPartySceneData;
 
     constructor() {
         super({
@@ -54,7 +56,7 @@ export class MonsterPartyScene extends BaseScene {
         });
     }
 
-    init(data): void {
+    init(data: MonsterPartySceneData): void {
         super.init(data);
 
         console.log(data);

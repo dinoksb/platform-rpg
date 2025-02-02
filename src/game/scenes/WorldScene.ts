@@ -19,6 +19,7 @@ import { MonsterPartySceneData } from "./MonsterPartyScene";
 import { BattleSceneData } from "./BattleScene";
 import { DataUtils } from "../../utils/DataUtils";
 import { Monster } from "../interfaces/TypeDef";
+import { weightedRandom } from "../../utils/Random";
 
 interface TiledObjectProperty {
     name: string;
@@ -34,6 +35,10 @@ const TILED_NPC_PROPERTY = {
     IS_SPAWN_POINT: "is_spawn_point",
     MESSAGES: "messages",
     FRAME: "frame",
+} as const;
+
+const TILED_ENCOUNTER_PROPERTY = {
+    AREA: "area",
 } as const;
 
 export interface WorldSceneData {
@@ -514,15 +519,21 @@ export class WorldScene extends BaseScene {
 
         this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
         if (this.whildMonsterEncountered) {
+            
+            const encounterAreaId = (this.encounterLayer.layer.properties as TiledObjectProperty[])
+            .find((property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA)?.value;
+            const possibleMonsters = DataUtils.getEncounterAreaDetails(this, encounterAreaId);
+            const randomMonsterId = weightedRandom(possibleMonsters);
+
             console.log(
-                `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster`
+                `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster in area ${encounterAreaId} and monster id has been picked randomly ${randomMonsterId}`
             );
             this.cameras.main.fadeOut(1000, 0, 0);
             this.cameras.main.once(
                 Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
                 () => {
                     const dataToPass: BattleSceneData = {
-                        enemyMonsters: [DataUtils.getMonsterById(this, 2)],
+                        enemyMonsters: [DataUtils.getMonsterById(this, randomMonsterId)],
                         playerMonsters: dataManager.getStore.get(
                             DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
                         ),

@@ -89,6 +89,21 @@ export class PreloadScene extends BaseScene {
             `${monsterTamerAssetsPath}/monsters/iguanignite.png`
         );
 
+        this.load.image(
+            MONSTER_ASSET_KEYS.AQUAVALOR,
+            `${monsterTamerAssetsPath}/monsters/aquavalor.png`
+        );
+
+        this.load.image(
+            MONSTER_ASSET_KEYS.FROSTSABER,
+            `${monsterTamerAssetsPath}/monsters/frostsaber.png`
+        );
+
+        this.load.image(
+            MONSTER_ASSET_KEYS.IGNIVOLT,
+            `${monsterTamerAssetsPath}/monsters/ignivolt.png`
+        );
+
         // ui assets
         this.load.image(
             UI_ASSET_KEYS.CURSOR,
@@ -131,6 +146,7 @@ export class PreloadScene extends BaseScene {
         );
         this.load.json(DATA_ASSET_KEYS.ITEMS, "assets/data/items.json");
         this.load.json(DATA_ASSET_KEYS.MONSTERS, "assets/data/monsters.json");
+        this.load.json(DATA_ASSET_KEYS.ENCOUNTERS, "assets/data/encounters.json");
 
         // load custom font
         this.load.addFile(
@@ -228,7 +244,7 @@ export class PreloadScene extends BaseScene {
         dataManager.init(this);
         dataManager.loadData();
 
-        this.scene.start(SCENE_KEYS.TITLE_SCENE);
+        this.scene.start(SCENE_KEYS.WORLD_SCENE);
     }
 
     private createAnimations() {

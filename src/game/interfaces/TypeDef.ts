@@ -61,3 +61,5 @@ export interface InventoryItem {
     item: Item
     quantity: number;
 }
+
+export type EncounterData = Record<string, number[][]>;

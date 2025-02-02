@@ -1,4 +1,4 @@
-import { ATTACK_ASSET_KEYS } from "../../../assets/AssetsKeys";
+import { ATTACK_ASSET_KEYS } from "../../../assets/AssetKeys";
 import { Coordinate } from "../../interfaces/Coordinate";
 import { Attack } from "./Attack";
 

@@ -3,7 +3,7 @@ import { BattleMenu } from "../battle/ui/menu/BattleMenu";
 import { Background } from "../battle/Background";
 import { EnemyBattleMonster } from "../battle/monsters/EnemyBattleMonster";
 import { PlayerBattleMonster } from "../battle/monsters/PlayerBattleMonster";
-import { MONSTER_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { MONSTER_ASSET_KEYS } from "../../assets/AssetKeys";
 import { StateMachine } from "../../utils/StateMachine";
 import { BATTLE_STATES } from "../battle/states/BattleStates";
 import { ATTACK_TARGET, AttackManager } from "../battle/attacks/AttackManager";
@@ -21,6 +21,7 @@ export class BattleScene extends BaseScene {
     private battleStateMachine: StateMachine;
     private attackManager: AttackManager;
     private skipAnimations: boolean;
+    private activeEnemyAttackIndex:  number;
 
     constructor() {
         super({
@@ -28,10 +29,11 @@ export class BattleScene extends BaseScene {
         });
     }
 
-    init() {
+    init(): void {
         super.init();
 
         this.activePlayerAttackIndex = -1;
+        this.activeEnemyAttackIndex = -1;
         this.skipAnimations = true;
         const chosenBattleSceneOption = dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS
@@ -46,7 +48,7 @@ export class BattleScene extends BaseScene {
         console.log("this.skipAnimations: ", this.skipAnimations);
     }
 
-    create() {
+    create(): void {
         super.create();
 
         // create main background
@@ -87,7 +89,7 @@ export class BattleScene extends BaseScene {
         this.controls.lockInput = true;
     }
 
-    update() {
+    update(): void {
         super.update();
 
         this.battleStateMachine.update();
@@ -121,6 +123,12 @@ export class BattleScene extends BaseScene {
 
         if (wasSpaceKeyPressed) {
             this.battleMenu.handlePlayerInput("OK");
+
+            // check if the player used an item
+            if (this.battleMenu.wasItemUsed) {
+                this.battleStateMachine.setState(BATTLE_STATES.ENEMY_INPUT);
+                return;
+            }
 
             // check if the player selected an attack, and update display text
             if (this.battleMenu.selectedAttack === undefined) {
@@ -192,8 +200,7 @@ export class BattleScene extends BaseScene {
 
         this.battleMenu.updateInfoPanelMesssageNoInputRequired(
             `for ${this.activeEnemyMonster.name} used ${
-                this.activeEnemyMonster.attacks[this.activePlayerAttackIndex]
-                    .name
+                this.activeEnemyMonster.attacks[0].name
             }.`,
             () => {
                 this.time.delayedCall(500, () => {
@@ -353,6 +360,21 @@ export class BattleScene extends BaseScene {
                 // then play damge animation, brief pause
                 // then play health bar animation, brief pause
                 // then reapeat the steps above for the other monster
+
+                // if item was used, only have enemy attack
+                if (this.battleMenu.wasItemUsed) {
+                    this.activePlayerMonster.updateMonsterHealth(
+                        dataManager.getStore.get(
+                            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+                        )[0].currentHp
+                    );
+                    this.time.delayedCall(500, () => {
+
+                        this.log("DDDDD");
+                        this.enemyAttack();
+                    });
+                    return;
+                }
 
                 this.playerAttack();
             },

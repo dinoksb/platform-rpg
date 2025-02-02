@@ -1,4 +1,4 @@
-import { CHARACTER_ASSET_KEYS } from "../../../assets/AssetsKeys";
+import { CHARACTER_ASSET_KEYS } from "../../../assets/AssetKeys";
 import { exhaustiveGuard } from "../../../utils/Guard";
 import { Direction } from "../../common/Direction";
 import { Character, CharacterConfig } from "./Character";

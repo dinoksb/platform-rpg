@@ -1,10 +1,11 @@
-import { UI_ASSET_KEYS } from "../../../../assets/AssetsKeys";
+import { UI_ASSET_KEYS } from "../../../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../../../assets/FontKeys";
 import { exhaustiveGuard } from "../../../../utils/Guard";
 import { DIRECTION, Direction } from "../../../common/Direction";
 
 export const MENU_OPTIONS = {
     MONSTERS: "MONSTERS",
+    BAG: 'BAG',
     EXIT: "EXIT",
 } as const;
 
@@ -33,7 +34,7 @@ export class Menu {
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         this.padding = 4;
-        this.availableMenuOptions = [MENU_OPTIONS.MONSTERS, MENU_OPTIONS.EXIT];
+        this.availableMenuOptions = [MENU_OPTIONS.MONSTERS, MENU_OPTIONS.BAG, MENU_OPTIONS.EXIT];
         this.width = 300;
         this.height =
             10 + this.padding * 2 + this.availableMenuOptions.length * 50;

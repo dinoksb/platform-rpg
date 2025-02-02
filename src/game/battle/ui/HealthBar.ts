@@ -1,4 +1,4 @@
-import { HEALTH_BAR_ASSET_KEYS } from "../../../assets/AssetsKeys";
+import { HEALTH_BAR_ASSET_KEYS } from "../../../assets/AssetKeys";
 
 export class HealthBar {
     private scene: Phaser.Scene;
@@ -31,13 +31,13 @@ export class HealthBar {
         percent: number,
         options: {
             duration?: number;
-            skipbattleAnimations?: boolean;
+            skipBattleAnimations?: boolean;
             callback?: () => void;
         }
     ) {
         const width = this.fullWidth * percent;
 
-        if (options?.skipbattleAnimations) {
+        if (options?.skipBattleAnimations) {
             this.setMeterPercentage(percent);
             if (options?.callback) {
                 options.callback();

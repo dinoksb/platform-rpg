@@ -6,6 +6,7 @@ import { WorldScene } from "./scenes/WorldScene";
 import { TitleScene } from "./scenes/TitleScene";
 import { MonsterPartyScene } from "./scenes/MonsterPartyScene";
 import { MonsterDatailsScene } from "./scenes/MonsterDetailsScene";
+import { InventoryScene } from "./scenes/InventoryScene";
 
 //  Find out more information about the Game Config at:
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
@@ -20,7 +21,7 @@ const config: Types.Core.GameConfig = {
         height: 576,
     },
     backgroundColor: "#000000",
-    scene: [PreloadScene, TitleScene, WorldScene, BattleScene, MainGame, MonsterPartyScene, MonsterDatailsScene],
+    scene: [PreloadScene, TitleScene, WorldScene, BattleScene, MainGame, MonsterPartyScene, MonsterDatailsScene, InventoryScene],
 };
 
 const StartGame = (parent: string) => {

@@ -5,17 +5,18 @@ import {
     CHARACTER_ASSET_KEYS,
     DATA_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
+    INVENTORY_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
     MONSTER_PARTY_ASSET_KEYS,
     TITLE_ASSET_KEYS,
     UI_ASSET_KEYS,
     WORLD_ASSET_KEYS,
-} from "../../assets/AssetsKeys";
+} from "../../assets/AssetKeys";
 import { SCENE_KEYS } from "./SceneKeys";
 import { WebFontFileLoader } from "../../assets/WebFontFileLoader";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DataUtils } from "../../utils/DataUtils";
-import { Animation } from "../interfaces/MonsterTypeDef";
+import { Animation } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
 
 export class PreloadScene extends BaseScene {
@@ -127,6 +128,7 @@ export class PreloadScene extends BaseScene {
             DATA_ASSET_KEYS.NPC_ANIMATIONS,
             "assets/data/npc-animations.json"
         );
+        this.load.json(DATA_ASSET_KEYS.ITEMS, "assets/data/items.json");
 
         // load custom font
         this.load.addFile(
@@ -211,12 +213,16 @@ export class PreloadScene extends BaseScene {
         // ui components for monster party
         this.load.image(MONSTER_PARTY_ASSET_KEYS.PARTY_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/background.png`);
         this.load.image(MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/monster-details-background.png`);
+
+        // ui components for inventory
+        this.load.image(INVENTORY_ASSET_KEYS.INVENTORY_BACKGROUND, `${monsterTamerAssetsPath}/ui/inventory/bag_background.png`);
+        this.load.image(INVENTORY_ASSET_KEYS.INVENTORY_BAG, `${monsterTamerAssetsPath}/ui/inventory/bag.png`);
     }
 
     create() {
         super.create();
         this.createAnimations();
-        this.scene.start(SCENE_KEYS.WORLD_SCENE);
+        this.scene.start(SCENE_KEYS.BATTLE_SCENE);
     }
 
     private createAnimations() {

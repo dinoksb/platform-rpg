@@ -1,4 +1,4 @@
-import { BATTLE_BACKGROUND_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { BATTLE_BACKGROUND_ASSET_KEYS } from "../../assets/AssetKeys";
 
 export class Background {
     private scene: Phaser.Scene;

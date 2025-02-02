@@ -1,9 +1,9 @@
-import { MONSTER_PARTY_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { MONSTER_PARTY_ASSET_KEYS } from "../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { DataUtils } from "../../utils/DataUtils";
-import { Monster } from "../interfaces/MonsterTypeDef";
-import { Attack } from "../interfaces/MonsterTypeDef";
+import { Monster } from "../interfaces/TypeDef";
+import { Attack } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
 

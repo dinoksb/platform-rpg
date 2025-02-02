@@ -1,11 +1,12 @@
-import { MONSTER_ASSET_KEYS } from "../assets/AssetsKeys";
+import { MONSTER_ASSET_KEYS } from "../assets/AssetKeys";
 import { TEXT_SPEED, TILE_SIZE } from "../Config";
 import { Direction, DIRECTION } from "../game/common/Direction";
 import {
     BATTLE_SCENE_OPTIONS,
     BattleSceneOptions,
 } from "../game/common/Options";
-import { Monster } from "../game/interfaces/MonsterTypeDef";
+import { BaseInventoryItem, Inventory, InventoryItem, Monster } from "../game/interfaces/TypeDef";
+import { DataUtils } from "./DataUtils";
 
 interface MonsterData {
     inParty: Monster[];
@@ -28,6 +29,7 @@ interface GlobalState {
         textSpeed: number;
     };
     monsters: MonsterData;
+    inventory: Inventory;
 }
 
 const initialState: GlobalState = {
@@ -52,7 +54,7 @@ const initialState: GlobalState = {
                 id: 1,
                 monsterId: 1,
                 name: MONSTER_ASSET_KEYS.IGUANIGNITE,
-                assetKey: MONSTER_ASSET_KEYS.IGUANIGNITE,
+                assetKey: MONSTER_ASSET_KEYS.IGUANIGNITE, 
                 assetFrame: 0,
                 currentHp: 25,
                 maxHp: 25,
@@ -62,6 +64,14 @@ const initialState: GlobalState = {
             },
         ],
     },
+    inventory: [
+        {
+            item: {
+                id: 1,
+            },
+            quantity: 1,
+        },
+    ],
 };
 
 export const DATA_MANAGER_STORE_KEYS = {
@@ -72,6 +82,7 @@ export const DATA_MANAGER_STORE_KEYS = {
     OPTIONS_BATTLE_SCENE_ANIMATIONS: "OPTIONS_BATTLE_SCENE_ANIMATIONS",
     OPTIONS_TEXT_SPEED: "OPTIONS_TEXT_SPEED",
     MONSTERS_IN_PARTY: "MONSTERS_IN_PARTY",
+    INVENTORY: "INVENTORY",
 } as const;
 
 class DataManager extends Phaser.Events.EventEmitter {
@@ -97,11 +108,37 @@ class DataManager extends Phaser.Events.EventEmitter {
         existingData.monsters = {
             inParty: [...initialState.monsters.inParty],
         };
-
+        existingData.inventory = initialState.inventory;
         this.store.reset();
         this.updateDataManager(existingData);
         // this.saveData();
     }
+
+    public getInventory(scene: Phaser.Scene): InventoryItem[] {
+        const items: InventoryItem[] = [];
+        const inventory: Inventory = this.store.get(DATA_MANAGER_STORE_KEYS.INVENTORY);
+        inventory.forEach((baseItem: BaseInventoryItem) => {
+            const item = DataUtils.getItem(scene, baseItem.item.id);
+            items.push({
+              item: item,
+              quantity: baseItem.quantity,
+            });
+          });
+        return items;
+    }
+
+    updateInventory(items: InventoryItem[]): void {
+        const inventory: BaseInventoryItem[] = items.map((item: InventoryItem) => {
+          return {
+            item: {
+              id: item.item.id,
+            },
+            quantity: item.quantity,
+          };
+        });
+      
+        this.store.set(DATA_MANAGER_STORE_KEYS.INVENTORY, inventory);
+      }
 
     private updateDataManager(data: GlobalState): void {
         this.store.set({
@@ -116,6 +153,7 @@ class DataManager extends Phaser.Events.EventEmitter {
             [DATA_MANAGER_STORE_KEYS.OPTIONS_TEXT_SPEED]:
                 data.options.textSpeed,
             [DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY]: data.monsters.inParty,
+            [DATA_MANAGER_STORE_KEYS.INVENTORY]: data.inventory,
         });
     }
 
@@ -155,6 +193,7 @@ class DataManager extends Phaser.Events.EventEmitter {
                     ),
                 ],
             },
+            inventory: this.store.get(DATA_MANAGER_STORE_KEYS.INVENTORY),
         };
     }
 }

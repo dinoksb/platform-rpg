@@ -1,4 +1,4 @@
-import { UI_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { UI_ASSET_KEYS } from "../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { animateText, CANNOT_READ_SIGN_TEXT } from "../../utils/TextUtils";

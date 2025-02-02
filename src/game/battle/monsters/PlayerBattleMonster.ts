@@ -1,5 +1,5 @@
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../../assets/FontKeys";
-import { BattleMonsterConfig } from "../../interfaces/MonsterTypeDef";
+import { BattleMonsterConfig } from "../../interfaces/TypeDef";
 import { BattleMonster } from "./BattleMonster";
 
 export const PLAYER_POSITION = {
@@ -21,6 +21,18 @@ export class PlayerBattleMonster extends BattleMonster {
     public takeDamage(damage: number, callback: () => void) {
         // update current monster health and animate health bar
         super.takeDamage(damage, callback);
+        this.setHealthBarText();
+    }
+
+    public updateMonsterHealth(updateHp: number){
+        this.currentHealth = updateHp;
+        if(this.currentHealth > this.maxHealth){
+            this.currentHealth = this.maxHealth;
+        }
+
+        this.healthBar.setMeterPercentageAnimated(this.currentHealth / this.maxHealth, {
+            skipBattleAnimations: true
+        });
         this.setHealthBarText();
     }
 

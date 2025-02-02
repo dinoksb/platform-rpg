@@ -1,4 +1,4 @@
-import { TITLE_ASSET_KEYS, UI_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { TITLE_ASSET_KEYS, UI_ASSET_KEYS } from "../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { dataManager } from "../../utils/DataManager";
 import { NineSlice } from "../../utils/NineSlice";

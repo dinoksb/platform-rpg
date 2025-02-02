@@ -33,5 +33,31 @@ export interface Animation {
     repeat: number;
     delay: number;
     yoyo: boolean;
-    assetKey: string;
+    assetKey: string;   
+}
+
+export const ITEM_EFFECT = {
+    HEAL_30: "HEAL_30",
+} as const;
+export type ItemEffect = (typeof ITEM_EFFECT)[keyof typeof ITEM_EFFECT];
+
+export interface Item {
+    id: number;
+    name: string;
+    effect: string;
+    description: string;
+}
+
+export interface BaseInventoryItem {
+    item: {
+        id: number,
+    };
+    quantity: number;
+}
+
+export type Inventory = BaseInventoryItem[];
+
+export interface InventoryItem {
+    item: Item
+    quantity: number;
 }

@@ -1,5 +1,5 @@
-import { DATA_ASSET_KEYS } from "../assets/AssetsKeys";
-import { Attack, Animation } from "../game/interfaces/MonsterTypeDef";
+import { DATA_ASSET_KEYS } from "../assets/AssetKeys";
+import { Attack, Animation, Item } from "../game/interfaces/TypeDef";
 
 export class DataUtils {
     public static getMonsterAttack(
@@ -16,5 +16,23 @@ export class DataUtils {
     ): Animation[] {
         const data = scene.cache.json.get(assetKey);
         return data;
+    }
+
+    public static getItem(
+        scene: Phaser.Scene,
+        itemId: number
+    ): Item{
+        const data = scene.cache.json.get(DATA_ASSET_KEYS.ITEMS);
+        return data.find((item: Item) => item.id == itemId);
+    }
+
+    public static getItems(
+        scene: Phaser.Scene,
+        itemIds: number[]
+    ): Item[]{
+        const data = scene.cache.json.get(DATA_ASSET_KEYS.ITEMS);
+        return data.filter((item: Item) => {
+            return itemIds.some((id: number) => id === item.id);
+        });
     }
 }

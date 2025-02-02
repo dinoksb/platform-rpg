@@ -1,5 +1,5 @@
-import { BATTLE_ASSET_KEYS } from "../../../assets/AssetsKeys";
-import { Attack, BattleMonsterConfig, Monster } from "../../interfaces/MonsterTypeDef";
+import { BATTLE_ASSET_KEYS } from "../../../assets/AssetKeys";
+import { Attack, BattleMonsterConfig, Monster } from "../../interfaces/TypeDef";
 import { HealthBar } from "../ui/HealthBar";
 import { DataUtils } from "../../../utils/DataUtils";
 import { Coordinate } from "../../interfaces/Coordinate";

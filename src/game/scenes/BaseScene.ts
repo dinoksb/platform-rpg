@@ -28,10 +28,12 @@ export abstract class BaseScene extends Phaser.Scene{
         this.controls = new Controls(this);
         this.events.on(Phaser.Scenes.Events.RESUME, this.handleSceneResume, this);
         this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.handleSceneCleanup, this);
+
+        this.scene.bringToTop();
     }
 
     update(){
-
+        super.update();
     }
 
     handleSceneResume(sys: Phaser.Scenes.Systems, data: any | undefined){

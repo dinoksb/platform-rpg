@@ -1,5 +1,5 @@
 import { SCENE_KEYS } from "./SceneKeys";
-import { WORLD_ASSET_KEYS } from "../../assets/AssetsKeys";
+import { WORLD_ASSET_KEYS } from "../../assets/AssetKeys";
 import { Player } from "../world/characters/Player";
 import { DIRECTION } from "../common/Direction";
 import {
@@ -14,6 +14,8 @@ import { getTargetPositionFromGameObjectPositionAndDirection } from "../../utils
 import { ToggleableCollisionLayer } from "../world/characters/Character";
 import { Menu } from "../battle/ui/menu/Menu";
 import { BaseScene } from "./BaseScene";
+import { InventorySceneData } from "./InventoryScene";
+import { MonsterPartySceneData } from "./MonsterPartyScene";
 
 interface TiledObjectProperty {
     name: string;
@@ -281,12 +283,22 @@ export class WorldScene extends BaseScene {
                 this.menu.handlePlayerInput("OK");
 
                 if (this.menu.getSelectedMenuOption === "MONSTERS") {
-                    const sceneDataToPass = {
+                    const sceneDataToPass: MonsterPartySceneData = {
                         previousSceneName: SCENE_KEYS.WORLD_SCENE,
                     }
                     this.scene.launch(SCENE_KEYS.MONSTER_PARTY_SCENE, sceneDataToPass);
                     this.scene.pause();
-                } else if (this.menu.getSelectedMenuOption === "EXIT") {
+                } 
+                
+                if (this.menu.getSelectedMenuOption === "BAG") {
+                    const sceneDataToPass: InventorySceneData = {
+                        previousSceneName: SCENE_KEYS.WORLD_SCENE,
+                    }
+                    this.scene.launch(SCENE_KEYS.INVENTORY_SCENE, sceneDataToPass);
+                    this.scene.pause();
+                }
+                
+                if (this.menu.getSelectedMenuOption === "EXIT") {
                     this.menu.hide();
                 }
             }

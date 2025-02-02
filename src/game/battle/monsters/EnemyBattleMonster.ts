@@ -1,4 +1,4 @@
-import { BattleMonsterConfig } from "../../interfaces/MonsterTypeDef";
+import { BattleMonsterConfig } from "../../interfaces/TypeDef";
 import { BattleMonster } from "./BattleMonster";
 
 export const ENEMY_POSITION = {

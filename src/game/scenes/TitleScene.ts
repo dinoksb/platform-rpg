@@ -28,11 +28,16 @@ export type MainMenuOptions =
 export type MenuTextStyle =
     (typeof Phaser.GameObjects.TextStyle)[keyof typeof Phaser.GameObjects.TextStyle];
 
+export interface TitleSceneData {
+    isGameOver: boolean;
+}
+
 export class TitleScene extends BaseScene {
     private mainMenuCursorPhaserImageGameObject: Phaser.GameObjects.Image;
     private nineSliceMenu: NineSlice;
     private selectedMenuOption: MainMenuOptions;
     private isContinueButtonEnabled: boolean;
+    private sceneData: TitleSceneData;
 
     constructor() {
         super({
@@ -40,9 +45,10 @@ export class TitleScene extends BaseScene {
         });
     }
 
-    init() {
-        super.init();
+    init(data: TitleSceneData) {
+        super.init(data);
 
+        this.sceneData = data;
         this.nineSliceMenu = new NineSlice({
             cornerCutSize: 32,
             textureManager: this.sys.textures,
@@ -136,6 +142,9 @@ export class TitleScene extends BaseScene {
                 this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );
+
+        if(this.sceneData.isGameOver)
+            this.cameras.main.fadeIn(1000, 0, 0, 0);
     }
 
     update() {
@@ -154,7 +163,7 @@ export class TitleScene extends BaseScene {
 
         const selectedDirection = this.controls.getDirectionKeyJustPressed();
         if (selectedDirection !== DIRECTION.NONE) {
-          this.moveMenuSelectCursor(selectedDirection);
+            this.moveMenuSelectCursor(selectedDirection);
         }
     }
 

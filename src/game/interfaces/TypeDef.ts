@@ -33,7 +33,7 @@ export interface Animation {
     repeat: number;
     delay: number;
     yoyo: boolean;
-    assetKey: string;   
+    assetKey: string;
 }
 
 export const ITEM_EFFECT = {
@@ -50,7 +50,7 @@ export interface Item {
 
 export interface BaseInventoryItem {
     item: {
-        id: number,
+        id: number;
     };
     quantity: number;
 }
@@ -58,8 +58,69 @@ export interface BaseInventoryItem {
 export type Inventory = BaseInventoryItem[];
 
 export interface InventoryItem {
-    item: Item
+    item: Item;
     quantity: number;
 }
 
 export type EncounterData = Record<string, number[][]>;
+
+/** NPC JSON Data Types */
+
+export const NPC_EVENT_TYPE = {
+    MESSAGE: "MESSAGE",
+    SCENE_FADE_IN_AND_OUT: "SCENE_FADE_IN_AND_OUT",
+    SCENE_CHANGE: "SCENE_CHANGE",
+    HEAL: "HEAL",
+    TRADE: "TRADE",
+    ITEM: "ITEM",
+    BATTLE: "BATTLE",
+} as const;
+
+export type NpcEventType = keyof typeof NPC_EVENT_TYPE;
+
+export interface NpcEventMessage {
+    type: typeof NPC_EVENT_TYPE.MESSAGE;
+    requires: string[];
+    data: {
+        messages: string[];
+    };
+}
+
+export interface NpcEventSceneFadeInAndOut {
+    type: typeof NPC_EVENT_TYPE.SCENE_FADE_IN_AND_OUT;
+    requires: string[];
+    data: {
+        fadeInDuration: number;
+        fadeOutDuration: number;
+        waitDuration: number;
+    };
+}
+
+export interface NpcEventSceneChange {
+    type: typeof NPC_EVENT_TYPE.SCENE_CHANGE;
+    requires: string[];
+    data: {
+        sceneName: string;
+        fadeOutDuration: number;
+    };
+}
+
+export interface NpcEventHeal {
+    type: typeof NPC_EVENT_TYPE.HEAL;
+    requires: string[];
+    data: {};
+}
+
+export type NpcEvent =
+    | NpcEventMessage
+    | NpcEventSceneFadeInAndOut
+    | NpcEventHeal
+    | NpcEventSceneChange;
+
+export interface NpcDetails {
+    frame: number;
+    animationKeyPrefix: string;
+    events: NpcEvent[];
+}
+
+export type NpcData = Record<string, NpcDetails>;

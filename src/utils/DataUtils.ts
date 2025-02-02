@@ -1,5 +1,12 @@
 import { DATA_ASSET_KEYS } from "../assets/AssetKeys";
-import { Attack, Animation, Item, Monster, EncounterData } from "../game/interfaces/TypeDef";
+import {
+    Attack,
+    Animation,
+    Item,
+    Monster,
+    NpcDetails,
+    NpcData,
+} from "../game/interfaces/TypeDef";
 
 export class DataUtils {
     public static getMonsterAttack(
@@ -18,18 +25,12 @@ export class DataUtils {
         return data;
     }
 
-    public static getItem(
-        scene: Phaser.Scene,
-        itemId: number
-    ): Item{
+    public static getItem(scene: Phaser.Scene, itemId: number): Item {
         const data = scene.cache.json.get(DATA_ASSET_KEYS.ITEMS);
         return data.find((item: Item) => item.id == itemId);
     }
 
-    public static getItems(
-        scene: Phaser.Scene,
-        itemIds: number[]
-    ): Item[]{
+    public static getItems(scene: Phaser.Scene, itemIds: number[]): Item[] {
         const data = scene.cache.json.get(DATA_ASSET_KEYS.ITEMS);
         return data.filter((item: Item) => {
             return itemIds.some((id: number) => id === item.id);
@@ -39,16 +40,21 @@ export class DataUtils {
     public static getMonsterById(
         scene: Phaser.Scene,
         monsterId: number
-    ): Monster{
+    ): Monster {
         const data = scene.cache.json.get(DATA_ASSET_KEYS.MONSTERS);
-        return data.find((monster: Monster) => monster.id == monsterId)
+        return data.find((monster: Monster) => monster.id == monsterId);
     }
-    
+
     public static getEncounterAreaDetails(
         scene: Phaser.Scene,
         areaId: number
-    ): number[][]{
+    ): number[][] {
         const data = scene.cache.json.get(DATA_ASSET_KEYS.ENCOUNTERS);
         return data[areaId];
+    }
+
+    public static getNpcData(scene: Phaser.Scene, npcId: number): NpcDetails {
+        const data: NpcData = scene.cache.json.get(DATA_ASSET_KEYS.NPCS);
+        return data[npcId];
     }
 }

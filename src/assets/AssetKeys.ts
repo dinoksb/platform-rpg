@@ -42,7 +42,7 @@ export const DATA_ASSET_KEYS = {
     NPC_ANIMATIONS: "NPC_ANIMATIONS",
     MONSTERS: "MONSTERS",
     ENCOUNTERS: "ENCOUNTERS",
-
+    NPCS: "NPCS",
 } as const;
 
 export const ATTACK_ASSET_KEYS = {

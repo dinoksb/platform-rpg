@@ -147,6 +147,7 @@ export class PreloadScene extends BaseScene {
         this.load.json(DATA_ASSET_KEYS.ITEMS, "assets/data/items.json");
         this.load.json(DATA_ASSET_KEYS.MONSTERS, "assets/data/monsters.json");
         this.load.json(DATA_ASSET_KEYS.ENCOUNTERS, "assets/data/encounters.json");
+        this.load.json(DATA_ASSET_KEYS.NPCS, "assets/data/npcs.json");
 
         // load custom font
         this.load.addFile(
@@ -244,7 +245,7 @@ export class PreloadScene extends BaseScene {
         dataManager.init(this);
         dataManager.loadData();
 
-        this.scene.start(SCENE_KEYS.WORLD_SCENE);
+        this.scene.start(SCENE_KEYS.TITLE_SCENE);
     }
 
     private createAnimations() {

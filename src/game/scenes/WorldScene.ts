@@ -18,8 +18,9 @@ import { InventorySceneData } from "./InventoryScene";
 import { MonsterPartySceneData } from "./MonsterPartyScene";
 import { BattleSceneData } from "./BattleScene";
 import { DataUtils } from "../../utils/DataUtils";
-import { Monster } from "../interfaces/TypeDef";
+import { Monster, NPC_EVENT_TYPE } from "../interfaces/TypeDef";
 import { weightedRandom } from "../../utils/Random";
+import { exhaustiveGuard } from "../../utils/Guard";
 
 interface TiledObjectProperty {
     name: string;
@@ -32,9 +33,8 @@ const CUSTOM_TILED_TYPE = {
 } as const;
 
 const TILED_NPC_PROPERTY = {
-    IS_SPAWN_POINT: "is_spawn_point",
-    MESSAGES: "messages",
     FRAME: "frame",
+    ID: "id",
 } as const;
 
 const TILED_ENCOUNTER_PROPERTY = {
@@ -57,6 +57,9 @@ export class WorldScene extends BaseScene {
     private endingCondition: boolean;
     private menu: Menu;
     private sceneData: WorldSceneData;
+    private lastNpcEventHandledIndex: number;
+    private isProcessingNpcEvent: boolean;
+    private moreNpcEventsToProcess: boolean;
 
     constructor() {
         super({
@@ -93,6 +96,9 @@ export class WorldScene extends BaseScene {
                 DIRECTION.DOWN
             );
         }
+        this.lastNpcEventHandledIndex = -1;
+        this.isProcessingNpcEvent = false;
+        this.moreNpcEventsToProcess = false;
     }
 
     create() {
@@ -254,7 +260,7 @@ export class WorldScene extends BaseScene {
             );
         }
 
-        this.cameras.main.fadeIn(1000, 0, 0, 0, (camera, progress: number) => {
+        this.cameras.main.fadeIn(1000, 0, 0, 0, (progress: number) => {
             if (progress === 1) {
                 // if the player was knocked out, want lock input, heal player, and have show message
                 if (this.sceneData.isPlayerKnockedOut) {
@@ -310,8 +316,8 @@ export class WorldScene extends BaseScene {
             this.handlePlayerInteraction();
         }
 
-        if (this.controls.wasEnterKeyPressed()) {
-            if (this.dialogUI.getIsVisible) {
+        if (this.controls.wasEnterKeyPressed() && !this.player.getIsMoving) {
+            if (this.dialogUI.getIsVisible || this.isProcessingNpcEvent) {
                 return;
             }
 
@@ -406,7 +412,9 @@ export class WorldScene extends BaseScene {
             this.dialogUI.hideDialogModal();
             if (this.npcPlayerIsInteractingWith) {
                 this.npcPlayerIsInteractingWith.isTalkingToPlayer = false;
-                this.npcPlayerIsInteractingWith = undefined;
+
+                if (!this.moreNpcEventsToProcess)
+                    this.npcPlayerIsInteractingWith = undefined;
             }
             return;
         }
@@ -433,8 +441,7 @@ export class WorldScene extends BaseScene {
             nearbyNpc.facePlayer(this.player.getDirection);
             nearbyNpc.isTalkingToPlayer = true;
             this.npcPlayerIsInteractingWith = nearbyNpc;
-            this.dialogUI.showDialogModal(nearbyNpc.getMessages);
-            // this.#handleNpcInteraction();
+            this.handleNpcInteraction();
             return;
         }
     }
@@ -443,7 +450,8 @@ export class WorldScene extends BaseScene {
         return (
             this.controls.isInputLocked ||
             this.dialogUI.getIsVisible ||
-            this.menu.getIsVisible
+            this.menu.getIsVisible ||
+            this.isProcessingNpcEvent
         );
     }
 
@@ -474,27 +482,20 @@ export class WorldScene extends BaseScene {
                 return;
             }
 
-            const npcFrame =
+            const npcId =
                 npcObject.properties.find(
                     (property: TiledObjectProperty) =>
-                        property.name === TILED_NPC_PROPERTY.FRAME
+                        property.name === TILED_NPC_PROPERTY.ID
                 )?.value || "0";
-            const npcMessagesString =
-                npcObject.properties.find(
-                    (property: TiledObjectProperty) =>
-                        property.name === TILED_NPC_PROPERTY.MESSAGES
-                )?.value || "";
-            const npcMessages = npcMessagesString.split("::");
-
+            const npcDetails = DataUtils.getNpcData(this, npcId);
             const npc = new NPC({
                 scene: this,
                 position: { x: npcObject.x, y: npcObject.y - TILE_SIZE },
                 direction: DIRECTION.DOWN,
-                frame: parseInt(npcFrame, 10),
-                messages: npcMessages,
-                otherCharactersToCheckForCollisionsWith: this.npcs,
+                frame: npcDetails.frame,
                 spriteGridMovementFinishedCallback: () => {},
                 spriteChangedDirectionCallback: () => {},
+                events: npcDetails.events,
             });
 
             this.npcs.push(npc);
@@ -519,10 +520,15 @@ export class WorldScene extends BaseScene {
 
         this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
         if (this.whildMonsterEncountered) {
-            
-            const encounterAreaId = (this.encounterLayer.layer.properties as TiledObjectProperty[])
-            .find((property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA)?.value;
-            const possibleMonsters = DataUtils.getEncounterAreaDetails(this, encounterAreaId);
+            const encounterAreaId = (
+                this.encounterLayer.layer.properties as TiledObjectProperty[]
+            ).find(
+                (property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA
+            )?.value;
+            const possibleMonsters = DataUtils.getEncounterAreaDetails(
+                this,
+                encounterAreaId
+            );
             const randomMonsterId = weightedRandom(possibleMonsters);
 
             console.log(
@@ -533,7 +539,9 @@ export class WorldScene extends BaseScene {
                 Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
                 () => {
                     const dataToPass: BattleSceneData = {
-                        enemyMonsters: [DataUtils.getMonsterById(this, randomMonsterId)],
+                        enemyMonsters: [
+                            DataUtils.getMonsterById(this, randomMonsterId),
+                        ],
                         playerMonsters: dataManager.getStore.get(
                             DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
                         ),
@@ -576,5 +584,125 @@ export class WorldScene extends BaseScene {
             DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY,
             monsters
         );
+    }
+
+    private handleNpcInteraction() {
+        if (
+            this.isProcessingNpcEvent ||
+            this.npcPlayerIsInteractingWith === undefined
+        ) {
+            return;
+        }
+
+        const isMoreEventsToProcess: boolean =
+            this.npcPlayerIsInteractingWith.getEvents.length - 1 !==
+            this.lastNpcEventHandledIndex;
+
+        if (!isMoreEventsToProcess) {
+            if (this.npcPlayerIsInteractingWith) {
+                this.npcPlayerIsInteractingWith.isTalkingToPlayer = false;
+            }
+            this.npcPlayerIsInteractingWith = undefined;
+            this.lastNpcEventHandledIndex = -1;
+            this.isProcessingNpcEvent = false;
+            this.moreNpcEventsToProcess = false;
+            return;
+        } else {
+            this.moreNpcEventsToProcess = true;
+        }
+
+        this.lastNpcEventHandledIndex += 1;
+        const eventToHandle =
+            this.npcPlayerIsInteractingWith?.getEvents[
+                this.lastNpcEventHandledIndex
+            ];
+
+        if (!eventToHandle) {
+            console.error("No event to handle");
+            return;
+        }
+
+        const eventType = eventToHandle?.type;
+
+        console.log("eventType: ", eventType);
+
+        switch (eventType) {
+            case NPC_EVENT_TYPE.MESSAGE:
+                const messages = eventToHandle?.data.messages;
+                if (messages == undefined) {
+                    console.error("messages is undefined");
+                    return;
+                }
+                this.dialogUI.showDialogModal(messages);
+
+                if (isMoreEventsToProcess) {
+                    this.waitForDialogToCloseWithPhaser(() => {
+                        this.handleNpcInteraction();
+                    });
+                }
+
+                break;
+            case NPC_EVENT_TYPE.SCENE_FADE_IN_AND_OUT:
+                this.isProcessingNpcEvent = true;
+                // lock input, and wait for scene to fade in and out
+                this.cameras.main.fadeOut(
+                    eventToHandle.data.fadeOutDuration,
+                    0,
+                    0,
+                    0,
+                    (fadeOutCamera, fadeOutProgress: number) => {
+                        if (fadeOutProgress !== 1) {
+                            return;
+                        }
+                        this.time.delayedCall(
+                            eventToHandle.data.waitDuration,
+                            () => {
+                                this.cameras.main.fadeIn(
+                                    eventToHandle.data.fadeInDuration,
+                                    0,
+                                    0,
+                                    0,
+                                    (fadeInCamera, fadeInProgress: number) => {
+                                        if (fadeInProgress !== 1) {
+                                            return;
+                                        }
+                                        this.isProcessingNpcEvent = false;
+                                        this.handleNpcInteraction();
+                                    }
+                                );
+                            }
+                        );
+                    }
+                );
+                break;
+            case NPC_EVENT_TYPE.SCENE_CHANGE:
+                this.isProcessingNpcEvent = true;
+                this.cameras.main.once(
+                    Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+                    () => {
+                        this.scene.start(eventToHandle.data.sceneName);
+                    }
+                );
+                // lock input, and wait for scene to fade in and out
+                this.cameras.main.fadeOut(
+                    eventToHandle.data.fadeOutDuration,
+                    0,
+                    0,
+                    0,
+                );
+                break;
+            default:
+                exhaustiveGuard(eventType);
+        }
+    }
+
+    private waitForDialogToCloseWithPhaser(callback: () => void) {
+        this.time.delayedCall(100, () => {
+            if (!this.dialogUI.getIsVisible) {
+                callback();
+            } else {
+                this.waitForDialogToCloseWithPhaser(callback); // 🔄 다시 검사
+            }
+        });
     }
 }

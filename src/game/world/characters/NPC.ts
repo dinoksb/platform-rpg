@@ -1,11 +1,12 @@
 import { CHARACTER_ASSET_KEYS } from "../../../assets/AssetKeys";
 import { exhaustiveGuard } from "../../../utils/Guard";
 import { Direction } from "../../common/Direction";
+import { NpcEvent } from "../../interfaces/TypeDef";
 import { Character, CharacterConfig } from "./Character";
 
 interface NPCConfigProps{
     frame: number;
-    messages: string[]
+    events: NpcEvent[]
 }
 
 export type NPCConfig = Omit<
@@ -14,8 +15,8 @@ export type NPCConfig = Omit<
 > & NPCConfigProps;
 
 export class NPC extends Character {
-    private messages: string[];
     private talkingToPlayer: boolean;
+    private events: NpcEvent[];
 
     constructor(config: NPCConfig) {
         super({
@@ -31,13 +32,13 @@ export class NPC extends Character {
             },
         });
 
-        this.messages = config.messages;
         this.talkingToPlayer = false;
         this.phaserGameObject.setScale(4);
+        this.events = config.events;
     }
 
-    public get getMessages(): string[] {
-        return [...this.messages];
+    public get getEvents(): NpcEvent[] {
+        return [...this.events];
     }
 
     public get isTalkingToPlayer(): boolean{

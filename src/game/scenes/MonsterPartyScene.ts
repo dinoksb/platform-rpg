@@ -33,7 +33,7 @@ const MONSTER_PARTY_POSITIONS = {
 
 export interface MonsterPartySceneData {
     previousSceneName: string;
-    itemSelected: Item;
+    itemSelected?: Item;
 }
 
 export class MonsterPartyScene extends BaseScene {
@@ -435,6 +435,11 @@ export class MonsterPartyScene extends BaseScene {
     }
 
     private handleItemUser(): void {
+        if (!this.sceneData.itemSelected) {
+            console.warn("No item selected.");
+            return;
+        }
+        
         switch (this.sceneData.itemSelected.effect) {
             case ITEM_EFFECT.HEAL_30:
                 this.handleHealItemUsed(30);

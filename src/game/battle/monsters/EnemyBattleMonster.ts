@@ -98,4 +98,8 @@ export class EnemyBattleMonster extends BattleMonster {
             }
         });
     }
+
+    public pickRandomMove(): number{
+        return Phaser.Math.Between(0, this.monsterAttacks.length - 1);
+    }
 }

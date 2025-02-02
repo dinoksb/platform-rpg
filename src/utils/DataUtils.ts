@@ -1,5 +1,5 @@
 import { DATA_ASSET_KEYS } from "../assets/AssetKeys";
-import { Attack, Animation, Item } from "../game/interfaces/TypeDef";
+import { Attack, Animation, Item, Monster } from "../game/interfaces/TypeDef";
 
 export class DataUtils {
     public static getMonsterAttack(
@@ -34,5 +34,13 @@ export class DataUtils {
         return data.filter((item: Item) => {
             return itemIds.some((id: number) => id === item.id);
         });
+    }
+
+    public static getMonsterById(
+        scene: Phaser.Scene,
+        monsterId: number
+    ): Monster{
+        const data = scene.cache.json.get(DATA_ASSET_KEYS.MONSTERS);
+        return data.find((monster: Monster) => monster.id == monsterId)
     }
 }

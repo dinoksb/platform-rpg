@@ -41,7 +41,7 @@ export class BattleMonster {
 
 
         this.healthBar.setMeterPercentageAnimated(this.currentHealth / this.maxHealth, {
-            skipbattleAnimations: true,
+            skipBattleAnimations: true,
         });
 
         this.monsterDetails.attackIds.forEach((attackId) => {
@@ -53,6 +53,10 @@ export class BattleMonster {
                 this.monsterAttacks.push(monsterAttack);
             }
         });
+    }
+
+    public get getCurrentHp(): number {
+        return this.currentHealth;
     }
 
     public get isFainted(): boolean {

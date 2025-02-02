@@ -3,7 +3,6 @@ import { BattleMenu } from "../battle/ui/menu/BattleMenu";
 import { Background } from "../battle/Background";
 import { EnemyBattleMonster } from "../battle/monsters/EnemyBattleMonster";
 import { PlayerBattleMonster } from "../battle/monsters/PlayerBattleMonster";
-import { MONSTER_ASSET_KEYS } from "../../assets/AssetKeys";
 import { StateMachine } from "../../utils/StateMachine";
 import { BATTLE_STATES } from "../battle/states/BattleStates";
 import { ATTACK_TARGET, AttackManager } from "../battle/attacks/AttackManager";
@@ -12,6 +11,13 @@ import { DIRECTION } from "../common/Direction";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { BATTLE_SCENE_OPTIONS } from "../common/Options";
 import { BaseScene } from "./BaseScene";
+import { Monster } from "../interfaces/TypeDef";
+import { DataUtils } from "../../utils/DataUtils";
+
+export interface BattleSceneData {
+    playerMonsters: Monster[];
+    enemyMonsters: Monster[];
+}
 
 export class BattleScene extends BaseScene {
     private battleMenu: BattleMenu;
@@ -21,7 +27,10 @@ export class BattleScene extends BaseScene {
     private battleStateMachine: StateMachine;
     private attackManager: AttackManager;
     private skipAnimations: boolean;
-    private activeEnemyAttackIndex:  number;
+    private activeEnemyAttackIndex: number;
+    private sceneData: BattleSceneData;
+    private activePlayerMonsterPartyIndex: number;
+
 
     constructor() {
         super({
@@ -29,11 +38,21 @@ export class BattleScene extends BaseScene {
         });
     }
 
-    init(): void {
-        super.init();
+    init(data: BattleSceneData): void {
+        super.init(data);
+
+        this.sceneData = data;
+
+        if(Object.keys(data).length === 0){
+            this.sceneData = {
+                enemyMonsters: [DataUtils.getMonsterById(this, 2)],
+                playerMonsters: [dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY)[0]]
+            }
+        }
 
         this.activePlayerAttackIndex = -1;
         this.activeEnemyAttackIndex = -1;
+        this.activePlayerMonsterPartyIndex = 0;
         this.skipAnimations = true;
         const chosenBattleSceneOption = dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS
@@ -58,26 +77,17 @@ export class BattleScene extends BaseScene {
         // render out the player and enemy monsters
         this.activeEnemyMonster = new EnemyBattleMonster({
             scene: this,
-            monsterDetails: {
-                id: 2,
-                monsterId: 2,
-                name: MONSTER_ASSET_KEYS.CARNODUSK,
-                assetKey: MONSTER_ASSET_KEYS.CARNODUSK,
-                assetFrame: 0,
-                currentHp: 25,
-                maxHp: 25,
-                attackIds: [1],
-                baseAttack: 5,
-                currentLevel: 5,
-            },
+            // monsterDetails: DataUtils.getMonsterById(this, 2),
+            monsterDetails: this.sceneData.enemyMonsters[0],
             skipBattleAnimation: this.skipAnimations,
         });
 
         this.activePlayerMonster = new PlayerBattleMonster({
             scene: this,
-            monsterDetails: dataManager.getStore.get(
-                DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
-            )[0],
+            // monsterDetails: dataManager.getStore.get(
+            //     DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+            // )[0],
+            monsterDetails: this.sceneData.playerMonsters[0],
             skipBattleAnimation: this.skipAnimations,
         });
 
@@ -130,6 +140,12 @@ export class BattleScene extends BaseScene {
                 return;
             }
 
+            // check if the player attempted to flee
+            if (this.battleMenu.isAttempingToFlee) {
+                this.battleStateMachine.setState(BATTLE_STATES.FLEE_ATTEMPT);
+                return;
+            }
+
             // check if the player selected an attack, and update display text
             if (this.battleMenu.selectedAttack === undefined) {
                 return;
@@ -163,7 +179,12 @@ export class BattleScene extends BaseScene {
         }
     }
 
-    private playerAttack() {
+    private playerAttack(callback: () => void): void {
+        if (this.activePlayerMonster.isFainted) {
+            callback();
+            return;
+        }
+
         this.battleMenu.updateInfoPanelMesssageNoInputRequired(
             `${this.activePlayerMonster.name} used ${this.activePlayerMonster.attacks[0].name}.`,
             () => {
@@ -179,7 +200,7 @@ export class BattleScene extends BaseScene {
                                     this.activeEnemyMonster.takeDamage(
                                         this.activePlayerMonster.baseAttack,
                                         () => {
-                                            this.enemyAttack();
+                                            callback();
                                         }
                                     );
                                 }
@@ -192,20 +213,23 @@ export class BattleScene extends BaseScene {
         );
     }
 
-    private enemyAttack() {
+    private enemyAttack(callback: () => void): void {
         if (this.activeEnemyMonster.isFainted) {
-            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+            callback();
             return;
         }
-
+        
         this.battleMenu.updateInfoPanelMesssageNoInputRequired(
             `for ${this.activeEnemyMonster.name} used ${
-                this.activeEnemyMonster.attacks[0].name
+                this.activeEnemyMonster.attacks[this.activeEnemyAttackIndex]
+                    .name
             }.`,
             () => {
                 this.time.delayedCall(500, () => {
                     this.attackManager.playAttackAnimation(
-                        this.activeEnemyMonster.attacks[0].animationName,
+                        this.activeEnemyMonster.attacks[
+                            this.activeEnemyAttackIndex
+                        ].animationName,
                         ATTACK_TARGET.PLAYER,
                         () => {
                             this.activePlayerMonster.playTakeDamageAnimation(
@@ -213,7 +237,7 @@ export class BattleScene extends BaseScene {
                                     this.activePlayerMonster.takeDamage(
                                         this.activeEnemyMonster.baseAttack,
                                         () => {
-                                            this.postBattleSequenceCheck();
+                                            callback();
                                         }
                                     );
                                 }
@@ -227,6 +251,8 @@ export class BattleScene extends BaseScene {
     }
 
     private postBattleSequenceCheck() {
+        this.sceneData.playerMonsters[this.activePlayerMonsterPartyIndex].currentHp = this.activePlayerMonster.getCurrentHp;
+        dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY, this.sceneData.playerMonsters);
         if (this.activeEnemyMonster.isFainted) {
             this.activeEnemyMonster.playTakeDamageAnimation(() => {
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
@@ -348,6 +374,9 @@ export class BattleScene extends BaseScene {
             onEnter: () => {
                 // TODO: add feature in a future update
                 // pick a random move for the enemy monster, and in the future implement some type of AI behaviour
+
+                this.activeEnemyAttackIndex =
+                    this.activeEnemyMonster.pickRandomMove();
                 this.battleStateMachine.setState(BATTLE_STATES.BATTLE);
             },
         });
@@ -369,14 +398,36 @@ export class BattleScene extends BaseScene {
                         )[0].currentHp
                     );
                     this.time.delayedCall(500, () => {
-
-                        this.log("DDDDD");
-                        this.enemyAttack();
+                        this.enemyAttack(() => {
+                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                        });
                     });
                     return;
                 }
 
-                this.playerAttack();
+                if (this.battleMenu.isAttempingToFlee) {
+                    this.time.delayedCall(500, () => {
+                        this.enemyAttack(() => {
+                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                        });
+                    });
+                    return;
+                }
+
+                const randomNumber = Phaser.Math.Between(0, 1);
+                if(randomNumber === 0){
+                    this.playerAttack(() => {
+                        this.enemyAttack(() => {
+                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                        });
+                    });
+                    return;
+                }
+                this.enemyAttack(() => {
+                    this.playerAttack(() => {
+                        this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                    });
+                });
             },
         });
         this.battleStateMachine.addState({
@@ -407,12 +458,30 @@ export class BattleScene extends BaseScene {
         this.battleStateMachine.addState({
             name: BATTLE_STATES.FLEE_ATTEMPT,
             onEnter: () => {
+                const randomNumber = Phaser.Math.Between(1, 10);
+                if (randomNumber > 5) {
+                    // player has run away successfully
+                    this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
+                        [`You got away safely!`],
+                        () => {
+                            this.battleStateMachine.setState(
+                                BATTLE_STATES.FINISHED
+                            );
+                        },
+                        this.skipAnimations
+                    );
+                    return;
+                }
+
+                // player failed to run away, allow enemy to take their turn.
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
-                    [`You got away safely!`],
+                    ["You failed to run away..."],
                     () => {
-                        this.battleStateMachine.setState(
-                            BATTLE_STATES.FINISHED
-                        );
+                        this.time.delayedCall(200, () => {
+                            this.battleStateMachine.setState(
+                                BATTLE_STATES.ENEMY_INPUT
+                            );
+                        });
                     },
                     this.skipAnimations
                 );

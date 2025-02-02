@@ -18,6 +18,7 @@ import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DataUtils } from "../../utils/DataUtils";
 import { Animation } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
+import { dataManager } from "../../utils/DataManager";
 
 export class PreloadScene extends BaseScene {
     constructor() {
@@ -129,6 +130,7 @@ export class PreloadScene extends BaseScene {
             "assets/data/npc-animations.json"
         );
         this.load.json(DATA_ASSET_KEYS.ITEMS, "assets/data/items.json");
+        this.load.json(DATA_ASSET_KEYS.MONSTERS, "assets/data/monsters.json");
 
         // load custom font
         this.load.addFile(
@@ -222,7 +224,11 @@ export class PreloadScene extends BaseScene {
     create() {
         super.create();
         this.createAnimations();
-        this.scene.start(SCENE_KEYS.BATTLE_SCENE);
+
+        dataManager.init(this);
+        dataManager.loadData();
+
+        this.scene.start(SCENE_KEYS.TITLE_SCENE);
     }
 
     private createAnimations() {

@@ -16,6 +16,8 @@ import { Menu } from "../battle/ui/menu/Menu";
 import { BaseScene } from "./BaseScene";
 import { InventorySceneData } from "./InventoryScene";
 import { MonsterPartySceneData } from "./MonsterPartyScene";
+import { BattleSceneData } from "./BattleScene";
+import { DataUtils } from "../../utils/DataUtils";
 
 interface TiledObjectProperty {
     name: string;
@@ -39,7 +41,7 @@ export class WorldScene extends BaseScene {
     private toggleableLayers: ToggleableCollisionLayer[];
     private whildMonsterEncountered: boolean;
     private dialogUI: DialogUI;
-    private isShowStartMessage: boolean;
+    private isNewGame: boolean;
     private npcs: NPC[];
     private npcPlayerIsInteractingWith: NPC | undefined;
     private endingCondition: boolean;
@@ -49,14 +51,15 @@ export class WorldScene extends BaseScene {
         super({
             key: SCENE_KEYS.WORLD_SCENE,
         });
-        this.isShowStartMessage = false;
         this.endingCondition = false;
+        this.isNewGame = false;
     }
 
-    init(data) {
-        super.init(data);
+    init() {
+        super.init();
         this.whildMonsterEncountered = false;
         this.npcPlayerIsInteractingWith = undefined;
+        this.isNewGame = !dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.GAME_STARTED);
     }
 
     create() {
@@ -219,17 +222,20 @@ export class WorldScene extends BaseScene {
         }
 
         this.cameras.main.fadeIn(1000, 0, 0, 0);
-        if (!this.isShowStartMessage) {
+        if (this.isNewGame) {
+            this.controls.lockInput = true;
             this.cameras.main.once(
                 Phaser.Cameras.Scene2D.Events.FADE_IN_COMPLETE,
                 () => {
                     this.dialogUI.showDialogModal([
                         "Start an exciting journey with your monster!",
                     ]);
-                    this.isShowStartMessage = true;
+                    this.controls.lockInput = false;
                 }
             );
         }
+
+        dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.GAME_STARTED, true);
     }
 
     update() {
@@ -247,8 +253,7 @@ export class WorldScene extends BaseScene {
             this.controls.getDirectionKeyJustPressed();
         if (
             selectedDirectionHelDown !== DIRECTION.NONE &&
-            !this.isPlayerInputLocked() &&
-            this.isShowStartMessage
+            !this.isPlayerInputLocked()
         ) {
             this.player.moveCharacter(selectedDirectionHelDown);
         }
@@ -282,22 +287,36 @@ export class WorldScene extends BaseScene {
             if (wasSpaceKeyPressed) {
                 this.menu.handlePlayerInput("OK");
 
+                if (this.menu.getSelectedMenuOption === "SAVE") {
+                    this.menu.hide();
+                    dataManager.saveData();
+                    this.dialogUI.showDialogModal([
+                        "Game progress has been saved",
+                    ]);
+                }
+
                 if (this.menu.getSelectedMenuOption === "MONSTERS") {
                     const sceneDataToPass: MonsterPartySceneData = {
                         previousSceneName: SCENE_KEYS.WORLD_SCENE,
-                    }
-                    this.scene.launch(SCENE_KEYS.MONSTER_PARTY_SCENE, sceneDataToPass);
+                    };
+                    this.scene.launch(
+                        SCENE_KEYS.MONSTER_PARTY_SCENE,
+                        sceneDataToPass
+                    );
                     this.scene.pause();
-                } 
-                
+                }
+
                 if (this.menu.getSelectedMenuOption === "BAG") {
                     const sceneDataToPass: InventorySceneData = {
                         previousSceneName: SCENE_KEYS.WORLD_SCENE,
-                    }
-                    this.scene.launch(SCENE_KEYS.INVENTORY_SCENE, sceneDataToPass);
+                    };
+                    this.scene.launch(
+                        SCENE_KEYS.INVENTORY_SCENE,
+                        sceneDataToPass
+                    );
                     this.scene.pause();
                 }
-                
+
                 if (this.menu.getSelectedMenuOption === "EXIT") {
                     this.menu.hide();
                 }
@@ -463,7 +482,11 @@ export class WorldScene extends BaseScene {
             this.cameras.main.once(
                 Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
                 () => {
-                    this.scene.start(SCENE_KEYS.BATTLE_SCENE);
+                    const dataToPass: BattleSceneData = {
+                        enemyMonsters: [DataUtils.getMonsterById(this, 2)],
+                        playerMonsters: dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY),
+                    }
+                    this.scene.start(SCENE_KEYS.BATTLE_SCENE, dataToPass);
                 }
             );
         }

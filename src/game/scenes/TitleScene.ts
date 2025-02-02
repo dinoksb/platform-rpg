@@ -1,19 +1,29 @@
 import { TITLE_ASSET_KEYS, UI_ASSET_KEYS } from "../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
-import { dataManager } from "../../utils/DataManager";
+import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
+import { exhaustiveGuard } from "../../utils/Guard";
 import { NineSlice } from "../../utils/NineSlice";
+import { DIRECTION, Direction } from "../common/Direction";
 import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
 
 const PLAYER_INPUT_CURSOR_POSITION = {
     x: 130,
+    y: 41,
 } as const;
 
-export const MENU_TEXT_STYLE = {
+const MENU_TEXT_STYLE = {
     fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
     color: "#4D4A49",
     fontSize: "30px",
 } as const;
+
+const MAIN_MENU_OPTIONS = {
+    NEW_GAME: "NEW_GAME",
+    CONTINUE: "CONTINUE",
+} as const;
+export type MainMenuOptions =
+    (typeof MAIN_MENU_OPTIONS)[keyof typeof MAIN_MENU_OPTIONS];
 
 export type MenuTextStyle =
     (typeof Phaser.GameObjects.TextStyle)[keyof typeof Phaser.GameObjects.TextStyle];
@@ -21,6 +31,8 @@ export type MenuTextStyle =
 export class TitleScene extends BaseScene {
     private mainMenuCursorPhaserImageGameObject: Phaser.GameObjects.Image;
     private nineSliceMenu: NineSlice;
+    private selectedMenuOption: MainMenuOptions;
+    private isContinueButtonEnabled: boolean;
 
     constructor() {
         super({
@@ -40,6 +52,11 @@ export class TitleScene extends BaseScene {
 
     create() {
         super.create();
+
+        this.selectedMenuOption = MAIN_MENU_OPTIONS.NEW_GAME;
+        this.isContinueButtonEnabled =
+            dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.GAME_STARTED) ||
+            false;
 
         // create background and title
         this.add
@@ -68,12 +85,19 @@ export class TitleScene extends BaseScene {
                 UI_ASSET_KEYS.MENU_BACKGROUND
             );
         const newGameText = this.add
-            .text(menuBackgroundWidth / 2, 100, "Start Game", MENU_TEXT_STYLE)
+            .text(menuBackgroundWidth / 2, 40, "New Game", MENU_TEXT_STYLE)
             .setOrigin(0.5);
+        const continueText = this.add
+            .text(menuBackgroundWidth / 2, 90, "Continue", MENU_TEXT_STYLE)
+            .setOrigin(0.5);
+        if (!this.isContinueButtonEnabled) {
+            continueText.setAlpha(0.5);
+        }
 
         const menuContainer = this.add.container(0, 0, [
             menuBackgroundContainer,
             newGameText,
+            continueText,
         ]);
         menuContainer.setPosition(
             this.scale.width / 2 - menuBackgroundWidth / 2,
@@ -82,7 +106,11 @@ export class TitleScene extends BaseScene {
 
         // create cursor
         this.mainMenuCursorPhaserImageGameObject = this.add
-            .image(PLAYER_INPUT_CURSOR_POSITION.x, 100, UI_ASSET_KEYS.CURSOR)
+            .image(
+                PLAYER_INPUT_CURSOR_POSITION.x,
+                PLAYER_INPUT_CURSOR_POSITION.y,
+                UI_ASSET_KEYS.CURSOR
+            )
             .setOrigin(0.5)
             .setScale(2.5);
         menuBackgroundContainer.add(this.mainMenuCursorPhaserImageGameObject);
@@ -102,7 +130,9 @@ export class TitleScene extends BaseScene {
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
-                dataManager.startGame();
+                if (this.selectedMenuOption === MAIN_MENU_OPTIONS.NEW_GAME) {
+                    dataManager.startNewGame(this);
+                }
                 this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );
@@ -111,15 +141,69 @@ export class TitleScene extends BaseScene {
     update() {
         super.update();
 
-        if(this.controls.IsInputLocked){
+        if (this.controls.isInputLocked) {
             return;
         }
-        
+
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         if (wasSpaceKeyPressed) {
             this.cameras.main.fadeOut(500, 0, 0, 0);
             this.controls.lockInput = true;
             return;
+        }
+
+        const selectedDirection = this.controls.getDirectionKeyJustPressed();
+        if (selectedDirection !== DIRECTION.NONE) {
+          this.moveMenuSelectCursor(selectedDirection);
+        }
+    }
+
+    private moveMenuSelectCursor(direction: Direction): void {
+        this.updateSelectedMenuOptionFromInput(direction);
+        switch (this.selectedMenuOption) {
+            case MAIN_MENU_OPTIONS.NEW_GAME:
+                this.mainMenuCursorPhaserImageGameObject.setY(
+                    PLAYER_INPUT_CURSOR_POSITION.y
+                );
+                break;
+            case MAIN_MENU_OPTIONS.CONTINUE:
+                this.mainMenuCursorPhaserImageGameObject.setY(91);
+                break;
+            default:
+                exhaustiveGuard(this.selectedMenuOption);
+        }
+    }
+
+    private updateSelectedMenuOptionFromInput(direction: Direction): void {
+        switch (direction) {
+            case DIRECTION.UP:
+                if (this.selectedMenuOption === MAIN_MENU_OPTIONS.NEW_GAME) {
+                    return;
+                }
+                if (this.selectedMenuOption === MAIN_MENU_OPTIONS.CONTINUE) {
+                    this.selectedMenuOption = MAIN_MENU_OPTIONS.NEW_GAME;
+                    return;
+                }
+                this.selectedMenuOption = MAIN_MENU_OPTIONS.CONTINUE;
+                return;
+            case DIRECTION.DOWN:
+                if (this.selectedMenuOption === MAIN_MENU_OPTIONS.CONTINUE) {
+                    return;
+                }
+                if (
+                    this.selectedMenuOption === MAIN_MENU_OPTIONS.NEW_GAME &&
+                    this.isContinueButtonEnabled
+                ) {
+                    this.selectedMenuOption = MAIN_MENU_OPTIONS.CONTINUE;
+                    return;
+                }
+                return;
+            case DIRECTION.LEFT:
+            case DIRECTION.RIGHT:
+            case DIRECTION.NONE:
+                return;
+            default:
+                exhaustiveGuard(direction);
         }
     }
 }

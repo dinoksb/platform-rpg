@@ -53,6 +53,7 @@ export class BattleMenu {
     private queuedMessageAnimationPlaying: boolean;
     private textAnimationSpeed: number;
     private usedItem: boolean;
+    private fleeAttempt: boolean;
 
     constructor(scene: Phaser.Scene, activePlayerMonster: BattleMonster) {
         this.scene = scene;
@@ -66,6 +67,7 @@ export class BattleMenu {
         this.queueMessagesSkipAnimation = false;
         this.queuedMessageAnimationPlaying = false;
         this.usedItem = false;
+        this.fleeAttempt = false;
         this.createMainInfoPanel();
         this.createMainBattleMenu();
         this.createMonsterAttackSubMenu();
@@ -92,6 +94,10 @@ export class BattleMenu {
         return this.usedItem;
     }
 
+    public get isAttempingToFlee(): boolean{
+        return this.fleeAttempt;
+    }
+
     public showMainBattleMenu() {
         this.activeBattleMenu = ACTIVE_BATTLE_MENU.BATTLE_MAIN;
         this.battleTextGameObjectLine1.setText("what should");
@@ -106,6 +112,7 @@ export class BattleMenu {
         );
         this.selectedAttackIndex = undefined;
         this.usedItem = false;
+        this.fleeAttempt = false;
     }
 
     public hideMainBattleMenu() {
@@ -662,15 +669,8 @@ export class BattleMenu {
         }
 
         if (this.selectedBattleMenuOption === BATTLE_MENU_OPTIONS.FLEE) {
-            // TODO
             this.activeBattleMenu = ACTIVE_BATTLE_MENU.BATTLE_FLEE;
-            this.updateInfoPanelMesssageAndWaitForInput(
-                ["You fail to run away..."],
-                () => {
-                    this.switchToMainBattleMenu();
-                },
-                SKIP_BATTLE_ANIMATIONS
-            );
+            this.fleeAttempt = true;
             return;
         }
 

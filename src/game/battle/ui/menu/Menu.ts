@@ -6,6 +6,7 @@ import { DIRECTION, Direction } from "../../../common/Direction";
 export const MENU_OPTIONS = {
     MONSTERS: "MONSTERS",
     BAG: 'BAG',
+    SAVE: 'SAVE',
     EXIT: "EXIT",
 } as const;
 
@@ -34,7 +35,7 @@ export class Menu {
     constructor(scene: Phaser.Scene) {
         this.scene = scene;
         this.padding = 4;
-        this.availableMenuOptions = [MENU_OPTIONS.MONSTERS, MENU_OPTIONS.BAG, MENU_OPTIONS.EXIT];
+        this.availableMenuOptions = [MENU_OPTIONS.MONSTERS, MENU_OPTIONS.BAG, MENU_OPTIONS.SAVE, MENU_OPTIONS.EXIT];
         this.width = 300;
         this.height =
             10 + this.padding * 2 + this.availableMenuOptions.length * 50;
@@ -154,6 +155,5 @@ export class Menu {
 
     private handleSelectedMenuOption(): void {
         this.slectedMenuOption = this.availableMenuOptions[this.selectedMenuOptionIndex];
-        
     }
 }

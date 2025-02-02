@@ -148,6 +148,8 @@ class DataManager extends Phaser.Events.EventEmitter {
             inParty: [...initialState.monsters.inParty],
         };
         existingData.inventory = initialState.inventory;
+        existingData.options.battleSceneAnimations = initialState.options.battleSceneAnimations;
+        existingData.options.textSpeed = initialState.options.textSpeed;
 
         this.store.reset();
         this.updateDataManager(existingData);

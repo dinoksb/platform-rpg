@@ -18,6 +18,7 @@ import { InventorySceneData } from "./InventoryScene";
 import { MonsterPartySceneData } from "./MonsterPartyScene";
 import { BattleSceneData } from "./BattleScene";
 import { DataUtils } from "../../utils/DataUtils";
+import { Monster } from "../interfaces/TypeDef";
 
 interface TiledObjectProperty {
     name: string;
@@ -35,6 +36,10 @@ const TILED_NPC_PROPERTY = {
     FRAME: "frame",
 } as const;
 
+export interface WorldSceneData {
+    isPlayerKnockedOut: boolean;
+}
+
 export class WorldScene extends BaseScene {
     private player: Player;
     private encounterLayer: Phaser.Tilemaps.TilemapLayer;
@@ -46,6 +51,7 @@ export class WorldScene extends BaseScene {
     private npcPlayerIsInteractingWith: NPC | undefined;
     private endingCondition: boolean;
     private menu: Menu;
+    private sceneData: WorldSceneData;
 
     constructor() {
         super({
@@ -55,11 +61,33 @@ export class WorldScene extends BaseScene {
         this.isNewGame = false;
     }
 
-    init() {
-        super.init();
+    init(data: WorldSceneData) {
+        super.init(data);
+        this.sceneData = data;
+
+        if (Object.keys(data).length === 0) {
+            this.sceneData = {
+                isPlayerKnockedOut: false,
+            };
+        }
+
         this.whildMonsterEncountered = false;
         this.npcPlayerIsInteractingWith = undefined;
-        this.isNewGame = !dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.GAME_STARTED);
+        this.isNewGame = !dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.GAME_STARTED
+        );
+
+        // update player location, and map data if the player knocked out in a battle
+        if (this.sceneData.isPlayerKnockedOut) {
+            dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.PLAYER_POSITION, {
+                x: 6 * TILE_SIZE,
+                y: 21 * TILE_SIZE,
+            });
+            dataManager.getStore.set(
+                DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
+                DIRECTION.DOWN
+            );
+        }
     }
 
     create() {
@@ -221,7 +249,18 @@ export class WorldScene extends BaseScene {
             );
         }
 
-        this.cameras.main.fadeIn(1000, 0, 0, 0);
+        this.cameras.main.fadeIn(1000, 0, 0, 0, (camera, progress: number) => {
+            if (progress === 1) {
+                // if the player was knocked out, want lock input, heal player, and have show message
+                if (this.sceneData.isPlayerKnockedOut) {
+                    this.healPlayerParty();
+                    this.dialogUI.showDialogModal([
+                        "It looks like your team put up quite a fight...",
+                        "I want ahead and healed them up for you.",
+                    ]);
+                }
+            }
+        });
         if (this.isNewGame) {
             this.controls.lockInput = true;
             this.cameras.main.once(
@@ -484,8 +523,10 @@ export class WorldScene extends BaseScene {
                 () => {
                     const dataToPass: BattleSceneData = {
                         enemyMonsters: [DataUtils.getMonsterById(this, 2)],
-                        playerMonsters: dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY),
-                    }
+                        playerMonsters: dataManager.getStore.get(
+                            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+                        ),
+                    };
                     this.scene.start(SCENE_KEYS.BATTLE_SCENE, dataToPass);
                 }
             );
@@ -510,6 +551,19 @@ export class WorldScene extends BaseScene {
         console.log(
             `Layer [${layerName}] collision is now: `,
             enable ? "ON" : "OFF"
+        );
+    }
+
+    private healPlayerParty(): void {
+        const monsters = dataManager.getStore.get(
+            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+        );
+        monsters.forEach((monster: Monster) => {
+            monster.currentHp = monster.maxHp;
+        });
+        dataManager.getStore.set(
+            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY,
+            monsters
         );
     }
 }

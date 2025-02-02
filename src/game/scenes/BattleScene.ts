@@ -13,6 +13,7 @@ import { BATTLE_SCENE_OPTIONS } from "../common/Options";
 import { BaseScene } from "./BaseScene";
 import { Monster } from "../interfaces/TypeDef";
 import { DataUtils } from "../../utils/DataUtils";
+import { WorldSceneData } from "./WorldScene";
 
 export interface BattleSceneData {
     playerMonsters: Monster[];
@@ -30,7 +31,7 @@ export class BattleScene extends BaseScene {
     private activeEnemyAttackIndex: number;
     private sceneData: BattleSceneData;
     private activePlayerMonsterPartyIndex: number;
-
+    private playerKnockedOut: boolean;
 
     constructor() {
         super({
@@ -54,6 +55,7 @@ export class BattleScene extends BaseScene {
         this.activeEnemyAttackIndex = -1;
         this.activePlayerMonsterPartyIndex = 0;
         this.skipAnimations = true;
+        this.playerKnockedOut = false;
         const chosenBattleSceneOption = dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.OPTIONS_BATTLE_SCENE_ANIMATIONS
         );
@@ -254,7 +256,7 @@ export class BattleScene extends BaseScene {
         this.sceneData.playerMonsters[this.activePlayerMonsterPartyIndex].currentHp = this.activePlayerMonster.getCurrentHp;
         dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY, this.sceneData.playerMonsters);
         if (this.activeEnemyMonster.isFainted) {
-            this.activeEnemyMonster.playTakeDamageAnimation(() => {
+            this.activeEnemyMonster.playDeathAnimation(() => {
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
                     [
                         `Wild ${this.activeEnemyMonster.name} fainted.`,
@@ -272,13 +274,14 @@ export class BattleScene extends BaseScene {
         }
 
         if (this.activePlayerMonster.isFainted) {
-            this.activeEnemyMonster.playDeathAnimation(() => {
+            this.activePlayerMonster.playDeathAnimation(() => {
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
                     [
                         `${this.activePlayerMonster.name} fainted.`,
                         "You have no more monsters, escaping to safety...",
                     ],
                     () => {
+                        this.playerKnockedOut = true;
                         this.battleStateMachine.setState(
                             BATTLE_STATES.FINISHED
                         );
@@ -293,11 +296,14 @@ export class BattleScene extends BaseScene {
     }
 
     private transitionToNextScene() {
+        const sceneDataToPass: WorldSceneData = {
+            isPlayerKnockedOut: this.playerKnockedOut,
+        }
         this.cameras.main.fadeOut(600, 0, 0, 0);
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
-                this.scene.start(SCENE_KEYS.WORLD_SCENE);
+                this.scene.start(SCENE_KEYS.WORLD_SCENE, sceneDataToPass);
             }
         );
     }

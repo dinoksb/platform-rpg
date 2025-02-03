@@ -54,7 +54,6 @@ export class WorldScene extends BaseScene {
     private isNewGame: boolean;
     private npcs: NPC[];
     private npcPlayerIsInteractingWith: NPC | undefined;
-    private endingCondition: boolean;
     private menu: Menu;
     private sceneData: WorldSceneData;
     private lastNpcEventHandledIndex: number;
@@ -65,7 +64,6 @@ export class WorldScene extends BaseScene {
         super({
             key: SCENE_KEYS.WORLD_SCENE,
         });
-        this.endingCondition = false;
         this.isNewGame = false;
     }
 
@@ -90,7 +88,8 @@ export class WorldScene extends BaseScene {
             let map = this.make.tilemap({
                 key: WORLD_ASSET_KEYS.WORLD_MAIN_LEVEL,
             });
-            const reviveLocation = map.getObjectLayer('Revive-Location')?.objects[0];
+            const reviveLocation =
+                map.getObjectLayer("Revive-Location")?.objects[0];
 
             dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.PLAYER_POSITION, {
                 x: reviveLocation?.x ? reviveLocation.x * TILE_SIZE : 0,
@@ -168,8 +167,6 @@ export class WorldScene extends BaseScene {
             return;
         }
         boulderCollisionLayer.setAlpha(1).setDepth(2);
-        // boulderCollisionLayer.setCollision(9, true);
-
         const toggleableLayers: ToggleableCollisionLayer[] = [
             {
                 layer: boulderCollisionLayer,
@@ -253,7 +250,6 @@ export class WorldScene extends BaseScene {
         );
 
         if (battleCount >= battleEndCount) {
-            this.endingCondition = true;
             this.setCollisionEnabledForLayer(
                 WORLD_ASSET_KEYS.WORLD_BOULDER_COLLISION,
                 false
@@ -265,19 +261,24 @@ export class WorldScene extends BaseScene {
             );
         }
 
-
-        this.cameras.main.fadeIn(1000, 0, 0, 0, (camera: Phaser.Cameras.Scene2D.Camera, progress: number) => {
-            if (progress === 1) {
-                // if the player was knocked out, want lock input, heal player, and have show message
-                if (this.sceneData.isPlayerKnockedOut) {
-                    this.healPlayerParty();
-                    this.dialogUI.showDialogModal([
-                        "I fought pretty well, but I lost in the end...",
-                        "This time, I’ll make sure to succeed in my adventure!",
-                    ]);
+        this.cameras.main.fadeIn(
+            1000,
+            0,
+            0,
+            0,
+            (camera: Phaser.Cameras.Scene2D.Camera, progress: number) => {
+                if (progress === 1) {
+                    // if the player was knocked out, want lock input, heal player, and have show message
+                    if (this.sceneData.isPlayerKnockedOut) {
+                        this.healPlayerParty();
+                        this.dialogUI.showDialogModal([
+                            "I fought pretty well, but I lost in the end...",
+                            "This time, I’ll make sure to succeed in my adventure!",
+                        ]);
+                    }
                 }
             }
-        });
+        );
         if (this.isNewGame) {
             this.controls.lockInput = true;
             this.cameras.main.once(
@@ -287,6 +288,12 @@ export class WorldScene extends BaseScene {
                         "Start an exciting journey with your monster!",
                     ]);
                     this.controls.lockInput = false;
+
+                    const monstersInParty: Monster[] = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY);
+                    const clonedMonster = DataUtils.getMonsterById(this, 1);
+                    const startingMonster = {...clonedMonster};
+                    monstersInParty.push(startingMonster);
+                    dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY, monstersInParty);
                 }
             );
         }
@@ -401,9 +408,7 @@ export class WorldScene extends BaseScene {
             this.player.getDirection
         );
 
-        if (this.endingCondition === false) {
-            this.handleWildMonsterBattleEncounter();
-        }
+        this.handleWildMonsterBattleEncounter();
     }
 
     private handlePlayerInteraction() {
@@ -520,10 +525,6 @@ export class WorldScene extends BaseScene {
             return;
         }
 
-        console.log(
-            `[${WorldScene.name}:handlePlayerMovementUpdate] player is in an encounter zone`
-        );
-
         this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
         if (this.whildMonsterEncountered) {
             const encounterAreaId = (
@@ -573,10 +574,6 @@ export class WorldScene extends BaseScene {
             found.layer.setAlpha(0);
         }
         found.isCollisionEnabled = enable;
-        console.log(
-            `Layer [${layerName}] collision is now: `,
-            enable ? "ON" : "OFF"
-        );
     }
 
     private healPlayerParty(): void {
@@ -691,7 +688,7 @@ export class WorldScene extends BaseScene {
                     eventToHandle.data.fadeOutDuration,
                     0,
                     0,
-                    0,
+                    0
                 );
                 break;
             default:

@@ -40,11 +40,11 @@ export interface InventorySceneData {
 }
 
 export interface InventorySceneWasResumedData {
-    itemUsed: boolean;
+    wasItemUsed: boolean;
 }
 
 export interface InventorySceneItemUsedData {
-    itemUsed: boolean;
+    wasItemUsed: boolean;
     item?: Item;
 }
 
@@ -234,9 +234,14 @@ export class InventoryScene extends BaseScene {
     override handleSceneResume(sys: Phaser.Scenes.Systems, data: InventorySceneWasResumedData | undefined){
         super.handleSceneResume(sys, data);
 
-        if(!data || !data.itemUsed){
+        console.log('data called: ', data);
+        console.log('data itemUsed: ', data?.wasItemUsed);
+
+        if(!data || !data.wasItemUsed){
             return;
         }
+
+        console.log('handleSceneResume called: ');
 
         const selectedItem = this.inventory[this.selectedInventoryOptionIndex];
         selectedItem.quantity -= 1;

@@ -1,30 +1,48 @@
-import { HEALTH_BAR_ASSET_KEYS } from "../../../assets/AssetKeys";
+export interface AnimatedBarConfig {
+    scene: Phaser.Scene;
+    x: number;
+    y: number;
+    width: number;
+    scaleY?: number;
+    leftCapAssetKey: string;
+    middleAssetKey: string;
+    rightCapAssetKey: string;
+    leftShadowCapAssetKey: string;
+    middleShadowAssetKey: string;
+    rightShadowCapAssetKey: string;
+}
 
-export class HealthBar {
-    private scene: Phaser.Scene;
-    private healthBarContainer: Phaser.GameObjects.Container;
-    private fullWidth: number;
-    private scaleY: number;
-    private leftCap: Phaser.GameObjects.Image;
-    private middle: Phaser.GameObjects.Image;
-    private rightCap: Phaser.GameObjects.Image;
-    private leftShadowCap: Phaser.GameObjects.Image;
-    private middleShadow: Phaser.GameObjects.Image;
-    private rightShadowCap: Phaser.GameObjects.Image;
 
-    constructor(scene: Phaser.Scene, x: number, y: number, width: number= 360) {
-        this.scene = scene;
-        this.fullWidth = width;
-        this.scaleY = 0.7;
+export abstract class AnimatedBar {
+    protected scene: Phaser.Scene;
+    protected container: Phaser.GameObjects.Container;
+    protected fullWidth: number;
+    protected scaleY: number;
+    protected leftCap: Phaser.GameObjects.Image;
+    protected middle: Phaser.GameObjects.Image;
+    protected rightCap: Phaser.GameObjects.Image;
+    protected leftShadowCap: Phaser.GameObjects.Image;
+    protected middleShadow: Phaser.GameObjects.Image;
+    protected rightShadowCap: Phaser.GameObjects.Image;
+    protected config: AnimatedBarConfig;
 
-        this.healthBarContainer = this.scene.add.container(x, y, []);
-        this.createHealthBarShadowImages(x, y);
-        this.createHealthBarImages(x, y);
+    constructor(config: AnimatedBarConfig) {
+        if(this.constructor === AnimatedBar){
+            throw new Error('AnimatedBart is an abstract class and cannot be instantiate');
+        }
+        this.scene = config.scene;
+        this.fullWidth = config.width;
+        this.scaleY = config.scaleY ?? 1;
+        this.config = config;
+
+        this.container = this.scene.add.container(config.x, config.y, []);
+        this.createBarShadowImages(config.x, config.y);
+        this.createBarImages(config.x, config.y);
         this.setMeterPercentage(1);
     }
 
-    public get container() {
-        return this.healthBarContainer;
+    public get getContainer() {
+        return this.container;
     }
 
     public setMeterPercentageAnimated(
@@ -51,15 +69,15 @@ export class HealthBar {
             duration: options?.duration || options?.duration === 0 ? 0 : 1000,
             ease: Phaser.Math.Easing.Sine.Out,
             onUpdate: () => {
-                this.updateHealthBarGameObjects();
+                this.updateBarGameObjects();
             },
             onComplete: options?.callback,
         });
     }
 
-    private createHealthBarShadowImages(x: number, y: number) {
+    protected createBarShadowImages(x: number, y: number) {
         this.leftShadowCap = this.scene.add
-            .image(x, y, HEALTH_BAR_ASSET_KEYS.LEFT_CAP_SHADOW)
+            .image(x, y, this.config.leftShadowCapAssetKey)
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
 
@@ -67,7 +85,7 @@ export class HealthBar {
             .image(
                 this.leftShadowCap.x + this.leftShadowCap.width,
                 y,
-                HEALTH_BAR_ASSET_KEYS.MIDDLE_SHADOW
+                this.config.middleShadowAssetKey
             )
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
@@ -77,28 +95,28 @@ export class HealthBar {
             .image(
                 this.middleShadow.x + this.middleShadow.displayWidth,
                 y,
-                HEALTH_BAR_ASSET_KEYS.RIGHT_CAP_SHADOW
+                this.config.rightShadowCapAssetKey
             )
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
 
-        this.healthBarContainer.add([
+        this.container.add([
             this.leftShadowCap,
             this.middleShadow,
             this.rightShadowCap,
         ]);
     }
 
-    private createHealthBarImages(x: number, y: number) {
+    protected createBarImages(x: number, y: number) {
         this.leftCap = this.scene.add
-            .image(x, y, HEALTH_BAR_ASSET_KEYS.LEFT_CAP)
+            .image(x, y, this.config.leftCapAssetKey)
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
         this.middle = this.scene.add
             .image(
                 this.leftCap.x + this.leftCap.width,
                 y,
-                HEALTH_BAR_ASSET_KEYS.MIDDLE
+                this.config.middleAssetKey
             )
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
@@ -107,22 +125,22 @@ export class HealthBar {
             .image(
                 this.middle.x + this.middle.displayWidth,
                 y,
-                HEALTH_BAR_ASSET_KEYS.RIGHT_CAP
+                this.config.rightCapAssetKey
             )
             .setOrigin(0, 0.5)
             .setScale(1, this.scaleY);
 
-        this.healthBarContainer.add([this.leftCap, this.middle, this.rightCap]);
+        this.container.add([this.leftCap, this.middle, this.rightCap]);
     }
 
-    private setMeterPercentage(percent = 1) {
+    protected setMeterPercentage(percent = 1) {
         const width = this.fullWidth * percent;
 
         this.middle.displayWidth = width;
-        this.updateHealthBarGameObjects();
+        this.updateBarGameObjects();
     }
 
-    private updateHealthBarGameObjects() {
+    protected updateBarGameObjects() {
         this.rightCap.x = this.middle.x + this.middle.displayWidth;
         const isVisible = this.middle.displayWidth > 0;
         this.leftCap.visible = isVisible;

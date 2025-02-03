@@ -3,14 +3,14 @@ import { Controls } from "../../utils/Controls";
 export abstract class BaseScene extends Phaser.Scene{
     protected controls: Controls;
 
-    constructor(config){
+    constructor(config: string | Phaser.Types.Scenes.SettingsConfig){
         super(config);
         if(this.constructor === BaseScene){
             throw new Error('BaseScene is an abstract class cannot be instantiated directly.');
         }
     }
 
-    init(data){
+    init(data: any | undefined){
         if(data){
             this.log(`[${this.constructor.name}:init] invoked, data provied: ${JSON.stringify(data)}`);
             return;
@@ -33,7 +33,6 @@ export abstract class BaseScene extends Phaser.Scene{
     }
 
     update(){
-        super.update();
     }
 
     handleSceneResume(sys: Phaser.Scenes.Systems, data: any | undefined){
@@ -47,7 +46,7 @@ export abstract class BaseScene extends Phaser.Scene{
 
     handleSceneCleanup(): void{
         this.log(`[${this.constructor.name }: handleSceneCleanup] invoked`);
-        this.events.off(Phaser.Scenes.Events.RESUME, this.handleSceneCleanup, this);
+        this.events.off(Phaser.Scenes.Events.RESUME, this.handleSceneResume, this);
     }
 
     protected log(message: string){

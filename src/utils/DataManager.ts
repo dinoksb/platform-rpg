@@ -52,7 +52,7 @@ const initialState: GlobalState = {
         battleEndCount: 2,
     },
     options: {
-        battleSceneAnimations: BATTLE_SCENE_OPTIONS.OFF,
+        battleSceneAnimations: BATTLE_SCENE_OPTIONS.ON,
         textSpeed: TEXT_SPEED.FAST,
     },
     gameStarted: false,
@@ -64,7 +64,7 @@ const initialState: GlobalState = {
             item: {
                 id: 1,
             },
-            quantity: 1,
+            quantity: 5,
         },
     ],
 };
@@ -91,13 +91,6 @@ class DataManager extends Phaser.Events.EventEmitter {
 
     public get getStore(): Phaser.Data.DataManager {
         return this.store;
-    }
-
-    init(scene: Phaser.Scene): void {
-        const startingMonster = DataUtils.getMonsterById(scene, 1);
-        this.store.set(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY, [
-            startingMonster,
-        ]);
     }
 
     public saveData() {
@@ -135,7 +128,7 @@ class DataManager extends Phaser.Events.EventEmitter {
         }
     }
 
-    public startNewGame(scene: Phaser.Scene): void {
+    public startNewGame(): void {
         const existingData = { ...this.dataManagerDataToGlobalStateObject() };
         existingData.player.position = { ...initialState.player.position };
         existingData.player.direction = initialState.player.direction;
@@ -153,7 +146,6 @@ class DataManager extends Phaser.Events.EventEmitter {
 
         this.store.reset();
         this.updateDataManager(existingData);
-        this.init(scene);
         this.saveData();
     }
 

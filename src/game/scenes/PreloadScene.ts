@@ -4,6 +4,7 @@ import {
     BATTLE_BACKGROUND_ASSET_KEYS,
     CHARACTER_ASSET_KEYS,
     DATA_ASSET_KEYS,
+    EXP_BAR_ASSET_KEYS,
     HEALTH_BAR_ASSET_KEYS,
     INVENTORY_ASSET_KEYS,
     MONSTER_ASSET_KEYS,
@@ -19,6 +20,7 @@ import { DataUtils } from "../../utils/DataUtils";
 import { Animation } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
 import { dataManager } from "../../utils/DataManager";
+import { EventBus } from "../EventBus";
 
 export class PreloadScene extends BaseScene {
     constructor() {
@@ -76,6 +78,22 @@ export class PreloadScene extends BaseScene {
         this.load.image(
             HEALTH_BAR_ASSET_KEYS.LEFT_CAP_SHADOW,
             `${kenneysAssetPath}/ui-space-expansion/barHorizontal_shadow_left.png`
+        );
+
+        // exp bar assets
+        this.load.image(
+            EXP_BAR_ASSET_KEYS.EXP_RIGHT_CAP,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_blue_right.png`
+        );
+
+        this.load.image(
+            EXP_BAR_ASSET_KEYS.EXP_MIDDLE,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_blue_mid.png`
+        );
+
+        this.load.image(
+            EXP_BAR_ASSET_KEYS.EXP_LEFT_CAP,
+            `${kenneysAssetPath}/ui-space-expansion/barHorizontal_blue_left.png`
         );
 
         // monster assets
@@ -146,7 +164,10 @@ export class PreloadScene extends BaseScene {
         );
         this.load.json(DATA_ASSET_KEYS.ITEMS, "assets/data/items.json");
         this.load.json(DATA_ASSET_KEYS.MONSTERS, "assets/data/monsters.json");
-        this.load.json(DATA_ASSET_KEYS.ENCOUNTERS, "assets/data/encounters.json");
+        this.load.json(
+            DATA_ASSET_KEYS.ENCOUNTERS,
+            "assets/data/encounters.json"
+        );
         this.load.json(DATA_ASSET_KEYS.NPCS, "assets/data/npcs.json");
 
         // load custom font
@@ -225,27 +246,49 @@ export class PreloadScene extends BaseScene {
         );
 
         // ui components for title
-        this.load.image(TITLE_ASSET_KEYS.BACKGROUND, `${monsterTamerAssetsPath}/ui/title/background.png`);
-        this.load.image(TITLE_ASSET_KEYS.PANEL, `${monsterTamerAssetsPath}/ui/title/title_background.png`);
-        this.load.image(TITLE_ASSET_KEYS.TITLE, `${monsterTamerAssetsPath}/ui/title/title_text.png`);
+        this.load.image(
+            TITLE_ASSET_KEYS.BACKGROUND,
+            `${monsterTamerAssetsPath}/ui/title/background.png`
+        );
+        this.load.image(
+            TITLE_ASSET_KEYS.PANEL,
+            `${monsterTamerAssetsPath}/ui/title/title_background.png`
+        );
+        this.load.image(
+            TITLE_ASSET_KEYS.TITLE,
+            `${monsterTamerAssetsPath}/ui/title/title_text.png`
+        );
 
         // ui components for monster party
-        this.load.image(MONSTER_PARTY_ASSET_KEYS.PARTY_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/background.png`);
-        this.load.image(MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND, `${monsterTamerAssetsPath}/ui/monster-party/monster-details-background.png`);
+        this.load.image(
+            MONSTER_PARTY_ASSET_KEYS.PARTY_BACKGROUND,
+            `${monsterTamerAssetsPath}/ui/monster-party/background.png`
+        );
+        this.load.image(
+            MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND,
+            `${monsterTamerAssetsPath}/ui/monster-party/monster-details-background.png`
+        );
 
         // ui components for inventory
-        this.load.image(INVENTORY_ASSET_KEYS.INVENTORY_BACKGROUND, `${monsterTamerAssetsPath}/ui/inventory/bag_background.png`);
-        this.load.image(INVENTORY_ASSET_KEYS.INVENTORY_BAG, `${monsterTamerAssetsPath}/ui/inventory/bag.png`);
+        this.load.image(
+            INVENTORY_ASSET_KEYS.INVENTORY_BACKGROUND,
+            `${monsterTamerAssetsPath}/ui/inventory/bag_background.png`
+        );
+        this.load.image(
+            INVENTORY_ASSET_KEYS.INVENTORY_BAG,
+            `${monsterTamerAssetsPath}/ui/inventory/bag.png`
+        );
     }
 
     create() {
         super.create();
         this.createAnimations();
 
-        dataManager.init(this);
         dataManager.loadData();
 
         this.scene.start(SCENE_KEYS.TITLE_SCENE);
+
+        EventBus.emit('current-scene-ready', this);
     }
 
     private createAnimations() {

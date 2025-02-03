@@ -14,6 +14,10 @@ export class EnemyBattleMonster extends BattleMonster {
         );
     }
 
+    public get baseExpValue(): number{
+        return this.monsterDetails.baseExp;
+    }
+
     public override playMonsterAppearAnimation(callback: () => void){
         const startPosX = 30;
         const endPosX = ENEMY_POSITION.x;

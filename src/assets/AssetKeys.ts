@@ -23,6 +23,12 @@ export const HEALTH_BAR_ASSET_KEYS = {
     MIDDLE_SHADOW: "MIDDLE_SHADOW",
 } as const;
 
+export const EXP_BAR_ASSET_KEYS = {
+    EXP_LEFT_CAP: "EXP_LEFT_CAP",
+    EXP_MIDDLE: "EXP_MIDDLE",
+    EXP_RIGHT_CAP: "EXP_RIGHT_CAP",
+} as const;
+
 export const UI_ASSET_KEYS = {
     CURSOR: "CURSOR",
     CURSOR_WHITE: "CURSOR_WHITE",

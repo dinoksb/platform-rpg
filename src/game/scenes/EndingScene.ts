@@ -3,7 +3,6 @@ import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { NineSlice } from "../../utils/NineSlice";
 import { BaseScene } from "./BaseScene";
 import { SCENE_KEYS } from "./SceneKeys";
-import { TitleSceneData } from "./TitleScene";
 
 const TEXT_STYLE = {
     fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
@@ -73,19 +72,22 @@ export class EndingScene extends BaseScene {
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
-                const sceneDataToPass: TitleSceneData = {
-                    isGameOver: true
-                };
-                this.scene.start(SCENE_KEYS.TITLE_SCENE, sceneDataToPass);
+                this.scene.start(SCENE_KEYS.PRELOAD_SCENE);
             }
         );
+        this.controls.lockInput = false;
     }
 
     update(): void {
         super.update();
 
+        if(this.controls.isInputLocked){
+            return;
+        }
+
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         if (wasSpaceKeyPressed) {
+            this.controls.lockInput = true;
             this.cameras.main.fadeOut(1000, 0, 0, 0);
             return;
         }

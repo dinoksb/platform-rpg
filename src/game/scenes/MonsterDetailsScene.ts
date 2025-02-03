@@ -2,6 +2,11 @@ import { MONSTER_PARTY_ASSET_KEYS } from "../../assets/AssetKeys";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { DataUtils } from "../../utils/DataUtils";
+import {
+    calculateExpBarCurrentValue,
+    expNeededForNextLevel,
+} from "../../utils/LevelingUtils";
+import { ExpBar } from "../common/ExpBar";
 import { Monster } from "../interfaces/TypeDef";
 import { Attack } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
@@ -19,6 +24,15 @@ const MONSTER_MOVE_TEXT_STYLE = {
     fontSize: "40px",
 } as const;
 
+const MONSTER_EXP_TEXT_STYLE = {
+    fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
+    color: "#000000",
+    fontSize: "22px",
+} as const;
+
+export interface MonsterDetailsSceneData {
+    monster: Monster;
+}
 
 export class MonsterDatailsScene extends BaseScene {
     private monsterDetails: Monster;
@@ -30,12 +44,14 @@ export class MonsterDatailsScene extends BaseScene {
         });
     }
 
-    init(data): void {
+    init(data: MonsterDetailsSceneData): void {
         super.init(data);
 
         this.monsterDetails = data.monster;
-        if(this.monsterDetails === undefined){
-            this.monsterDetails = dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY)[0];
+        if (this.monsterDetails === undefined) {
+            this.monsterDetails = dataManager.getStore.get(
+                DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+            )[0];
         }
         // added for testing from preload scene directly
         if (this.monsterDetails === undefined) {
@@ -57,40 +73,112 @@ export class MonsterDatailsScene extends BaseScene {
         super.create();
 
         // create background and title
-        this.add.image(0, 0, MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND).setOrigin(0);
-        this.add.text(10, 0, 'Monster Details', {
+        this.add
+            .image(0, 0, MONSTER_PARTY_ASSET_KEYS.MONSTER_DETAILS_BACKGROUND)
+            .setOrigin(0);
+        this.add.text(10, 0, "Monster Details", {
             ...UI_TEXT_STYLE,
-            fontSize: '48px',
+            fontSize: "48px",
         });
 
         // add monster details
         this.add.text(20, 60, `Lv.${this.monsterDetails.currentLevel}`, {
             ...UI_TEXT_STYLE,
-            fontSize: '40px',
+            fontSize: "40px",
         });
 
         this.add.text(200, 60, this.monsterDetails.name, {
             ...UI_TEXT_STYLE,
-            fontSize: '40px',
+            fontSize: "40px",
         });
 
-        this.add.image(160, 310, this.monsterDetails.assetKey).setOrigin(0, 1).setScale(0.7);
+        this.add
+            .image(160, 310, this.monsterDetails.assetKey)
+            .setOrigin(0, 1)
+            .setScale(0.7);
 
-        if(this.monsterAttacks[0] !== undefined){
-            this.add.text(560, 82, this.monsterAttacks[0].name, MONSTER_MOVE_TEXT_STYLE);
+        if (this.monsterAttacks[0] !== undefined) {
+            this.add.text(
+                560,
+                82,
+                this.monsterAttacks[0].name,
+                MONSTER_MOVE_TEXT_STYLE
+            );
         }
 
-        if(this.monsterAttacks[1] !== undefined){
-            this.add.text(560, 162, this.monsterAttacks[1].name, MONSTER_MOVE_TEXT_STYLE);
+        if (this.monsterAttacks[1] !== undefined) {
+            this.add.text(
+                560,
+                162,
+                this.monsterAttacks[1].name,
+                MONSTER_MOVE_TEXT_STYLE
+            );
         }
 
-        if(this.monsterAttacks[2] !== undefined){
-            this.add.text(560, 242, this.monsterAttacks[2].name, MONSTER_MOVE_TEXT_STYLE);
+        if (this.monsterAttacks[2] !== undefined) {
+            this.add.text(
+                560,
+                242,
+                this.monsterAttacks[2].name,
+                MONSTER_MOVE_TEXT_STYLE
+            );
         }
 
-        if(this.monsterAttacks[3] !== undefined){
-            this.add.text(560, 322, this.monsterAttacks[3].name, MONSTER_MOVE_TEXT_STYLE);
+        if (this.monsterAttacks[3] !== undefined) {
+            this.add.text(
+                560,
+                322,
+                this.monsterAttacks[3].name,
+                MONSTER_MOVE_TEXT_STYLE
+            );
         }
+
+        // add monster exp details
+        // TODO: update with real exp
+        this.add
+            .text(20, 340, "Currect Exp.", MONSTER_EXP_TEXT_STYLE)
+            .setOrigin(0);
+        this.add
+            .text(
+                516,
+                340,
+                `${this.monsterDetails.currentExp}`,
+                MONSTER_EXP_TEXT_STYLE
+            )
+            .setOrigin(1, 0);
+        this.add
+            .text(20, 365, "Exp. to next level.", MONSTER_EXP_TEXT_STYLE)
+            .setOrigin(0);
+        this.add
+            .text(
+                516,
+                365,
+                `${expNeededForNextLevel(
+                    this.monsterDetails.currentLevel,
+                    this.monsterDetails.currentExp
+                )}`,
+                MONSTER_EXP_TEXT_STYLE
+            )
+            .setOrigin(1, 0);
+        this.add.text(108, 392, "EXP", {
+            fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
+            color: "#6505FF",
+            fontSize: "14px",
+            fontStyle: "italic",
+        });
+
+        const expBar = new ExpBar(this, 70, 200);
+        expBar.setMeterPercentageAnimated(
+            calculateExpBarCurrentValue(
+                this.monsterDetails.currentLevel,
+                this.monsterDetails.currentExp
+            ),
+            {
+                skipBattleAnimations: true,
+            }
+        );
+
+        this.scene.bringToTop(SCENE_KEYS.MONSTER_DETAILS_SCENE);
     }
 
     update(): void {
@@ -103,18 +191,18 @@ export class MonsterDatailsScene extends BaseScene {
         const wasSpaceKeyPressed = this.controls.wasSpaceKeyPressed();
         const wasBackKeyPressed = this.controls.wasBackKeyPressed();
 
-        if(wasBackKeyPressed){
+        if (wasBackKeyPressed) {
             this.goBackToPreviousScene();
         }
 
-        if(wasSpaceKeyPressed){
+        if (wasSpaceKeyPressed) {
             this.goBackToPreviousScene();
         }
     }
 
     private goBackToPreviousScene(): void {
         this.controls.lockInput = true;
-        this.scene.stop(SCENE_KEYS.MONSTER_DETAILS_SCENE)
+        this.scene.stop(SCENE_KEYS.MONSTER_DETAILS_SCENE);
         this.scene.resume(SCENE_KEYS.MONSTER_PARTY_SCENE);
     }
 }

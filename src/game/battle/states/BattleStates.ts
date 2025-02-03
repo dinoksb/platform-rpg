@@ -8,6 +8,7 @@ export const BATTLE_STATES = {
     POST_ATTACK_CHECK: "POST_ATTACK_CHECK",
     FINISHED: "FINISHED",
     FLEE_ATTEMPT: "FLEE_ATTEMPT",
+    GAIN_EXPERIENCE: "GAIN_EXPERIENCE",
 } as const;
 
 export type BattleState = (typeof BATTLE_STATES)[keyof typeof BATTLE_STATES];

@@ -28,16 +28,12 @@ export type MainMenuOptions =
 export type MenuTextStyle =
     (typeof Phaser.GameObjects.TextStyle)[keyof typeof Phaser.GameObjects.TextStyle];
 
-export interface TitleSceneData {
-    isGameOver: boolean;
-}
 
 export class TitleScene extends BaseScene {
     private mainMenuCursorPhaserImageGameObject: Phaser.GameObjects.Image;
     private nineSliceMenu: NineSlice;
     private selectedMenuOption: MainMenuOptions;
     private isContinueButtonEnabled: boolean;
-    private sceneData: TitleSceneData;
 
     constructor() {
         super({
@@ -45,10 +41,9 @@ export class TitleScene extends BaseScene {
         });
     }
 
-    init(data: TitleSceneData) {
-        super.init(data);
+    init() {
+        super.init(undefined);
 
-        this.sceneData = data;
         this.nineSliceMenu = new NineSlice({
             cornerCutSize: 32,
             textureManager: this.sys.textures,
@@ -80,9 +75,6 @@ export class TitleScene extends BaseScene {
 
         // create menu
         const menuBackgroundWidth = 500;
-        // TODO: replace with a nineslice image
-        // const menuBackground = this.add.image(240, 100, UI_ASSET_KEYS.MENU_BACKGROUND).setOrigin(0.5).setScale(3, 1);
-        // const menuBackgroundContainer = this.add.container(0, 0, [menuBackground])
         const menuBackgroundContainer =
             this.nineSliceMenu.createNineSliceContainer(
                 this,
@@ -137,14 +129,11 @@ export class TitleScene extends BaseScene {
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
             () => {
                 if (this.selectedMenuOption === MAIN_MENU_OPTIONS.NEW_GAME) {
-                    dataManager.startNewGame(this);
+                    dataManager.startNewGame();
                 }
                 this.scene.start(SCENE_KEYS.WORLD_SCENE);
             }
         );
-
-        if(this.sceneData.isGameOver)
-            this.cameras.main.fadeIn(1000, 0, 0, 0);
     }
 
     update() {

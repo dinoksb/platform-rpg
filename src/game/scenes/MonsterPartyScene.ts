@@ -7,7 +7,7 @@ import {
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../assets/FontKeys";
 import { DATA_MANAGER_STORE_KEYS, dataManager } from "../../utils/DataManager";
 import { exhaustiveGuard } from "../../utils/Guard";
-import { HealthBar } from "../battle/ui/HealthBar";
+import { HealthBar } from "../common/HealthBar";
 import { Direction, DIRECTION } from "../common/Direction";
 import { Item, ITEM_EFFECT, Monster } from "../interfaces/TypeDef";
 import { BaseScene } from "./BaseScene";
@@ -58,8 +58,6 @@ export class MonsterPartyScene extends BaseScene {
 
     init(data: MonsterPartySceneData): void {
         super.init(data);
-
-        console.log(data);
 
         this.sceneData = data;
         this.monsterPartyBackgrounds = [];
@@ -206,7 +204,7 @@ export class MonsterPartyScene extends BaseScene {
                     SCENE_KEYS.INVENTORY_SCENE &&
                 this.sceneData.itemSelected
             ) {
-                this.handleItemUser();
+                this.handleItemUsed();
                 return;
             }
 
@@ -292,7 +290,7 @@ export class MonsterPartyScene extends BaseScene {
         healthBar.setMeterPercentageAnimated(
             monsterDetails.currentHp / monsterDetails.maxHp,
             {
-                duration: 0,
+                duration: 0.1,
                 skipBattleAnimations: true,
             }
         );
@@ -350,7 +348,7 @@ export class MonsterPartyScene extends BaseScene {
             leftShadowCap,
             middleShadow,
             rightShadowCap,
-            healthBar.container,
+            healthBar.getContainer,
             monsterImage,
             monsterNameGameText,
             monsterHealthBarLevelText,
@@ -369,10 +367,12 @@ export class MonsterPartyScene extends BaseScene {
         this.scene.pause(SCENE_KEYS.MONSTER_PARTY_SCENE);
     }
 
-    private goBackToPreviousScene(itemUsed: boolean): void {
-        this.controls.lockInput = true;
-        this.scene.stop(SCENE_KEYS.MONSTER_PARTY_SCENE);
-        this.scene.resume(this.sceneData.previousSceneName, { itemUsed });
+    private goBackToPreviousScene(wasItemUsed:boolean): void {
+          this.controls.lockInput = true;
+          this.scene.stop(SCENE_KEYS.MONSTER_PARTY_SCENE);
+          this.scene.resume(this.sceneData.previousSceneName, {
+            wasItemUsed,
+          });
     }
 
     private movePlayerInputCursor(direction: Direction): void {
@@ -434,7 +434,7 @@ export class MonsterPartyScene extends BaseScene {
         );
     }
 
-    private handleItemUser(): void {
+    private handleItemUsed(): void {
         if (!this.sceneData.itemSelected) {
             console.warn("No item selected.");
             return;

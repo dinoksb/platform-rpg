@@ -199,8 +199,6 @@ export class BattleMenu {
             return;
         }
 
-        console.log("this.textAnimationSpeed: ", this.textAnimationSpeed);
-
         animateText(this.scene, this.battleTextGameObjectLine1, message, {
             delay: this.textAnimationSpeed,
             callback: () => {
@@ -270,7 +268,14 @@ export class BattleMenu {
             20,
             468,
             "what should",
-            BATTLE_UI_TEXT_STYLE
+            {...BATTLE_UI_TEXT_STYLE,
+                ...{
+                    wordWrap: {
+                        width: this.scene.scale.width - 20,
+                    }
+                }
+            },
+            
         );
         // TODO: update to use monster data that is passed into this class instance
         this.battleTextGameObjectLine2 = this.scene.add.text(

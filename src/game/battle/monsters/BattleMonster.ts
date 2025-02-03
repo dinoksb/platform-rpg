@@ -1,6 +1,6 @@
 import { BATTLE_ASSET_KEYS } from "../../../assets/AssetKeys";
 import { Attack, BattleMonsterConfig, Monster } from "../../interfaces/TypeDef";
-import { HealthBar } from "../ui/HealthBar";
+import { HealthBar } from "../../common/HealthBar";
 import { DataUtils } from "../../../utils/DataUtils";
 import { Coordinate } from "../../interfaces/Coordinate";
 import { KENNEY_FUTURE_NARROW_FONT_NAME } from "../../../assets/FontKeys";
@@ -15,6 +15,7 @@ export class BattleMonster {
     protected monsterAttacks: Attack[];
     protected phaserHealthBarGameContainer: Phaser.GameObjects.Container;
     protected skipBattleAnimations: boolean;
+    protected monsterHealthBarLevelText: Phaser.GameObjects.Text;
 
     constructor(config: BattleMonsterConfig, position: Coordinate) {
         this.scene = config.scene;
@@ -72,7 +73,7 @@ export class BattleMonster {
     }
 
     public get baseAttack(): number {
-        return this.monsterDetails.baseAttack;
+        return this.monsterDetails.currentAttack;
     }
 
     public get level(): number {
@@ -131,6 +132,10 @@ export class BattleMonster {
         throw new Error("playerDeathAnimation is not implemented.");
     }
 
+    protected setMonsterLevelText(): void{
+        this.monsterHealthBarLevelText.setText(`L${this.level}`);
+    }
+
     private createHealthBarComponents(
         scaleHealthBarBackgroundImageByY = 1
     ): void {
@@ -146,7 +151,7 @@ export class BattleMonster {
             .setOrigin(0)
             .setScale(1, scaleHealthBarBackgroundImageByY);
 
-        const monsterHealthBarLevelText = this.scene.add.text(
+        this.monsterHealthBarLevelText = this.scene.add.text(
             monsterNameGameText.width + 35,
             23,
             `L${this.level}`,
@@ -156,6 +161,8 @@ export class BattleMonster {
                 fontSize: "28px",
             }
         );
+        this.setMonsterLevelText();
+
         const monsterHpText = this.scene.add.text(30, 55, "HP", {
             fontFamily: KENNEY_FUTURE_NARROW_FONT_NAME,
             color: "#FF6505",
@@ -167,8 +174,8 @@ export class BattleMonster {
             .container(0, 0, [
                 healthBarBackgroundImage,
                 monsterNameGameText,
-                this.healthBar.container,
-                monsterHealthBarLevelText,
+                this.healthBar.getContainer,
+                this.monsterHealthBarLevelText,
                 monsterHpText,
             ])
             .setAlpha(0);

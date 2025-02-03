@@ -14,6 +14,11 @@ import { BaseScene } from "./BaseScene";
 import { Monster } from "../interfaces/TypeDef";
 import { DataUtils } from "../../utils/DataUtils";
 import { WorldSceneData } from "./WorldScene";
+import {
+    calculateExpGainedFromMonster,
+    handleMonsterGainingExperience,
+    StatChanges,
+} from "../../utils/LevelingUtils";
 
 export interface BattleSceneData {
     playerMonsters: Monster[];
@@ -44,11 +49,15 @@ export class BattleScene extends BaseScene {
 
         this.sceneData = data;
 
-        if(Object.keys(data).length === 0){
+        if (Object.keys(data).length === 0) {
             this.sceneData = {
                 enemyMonsters: [DataUtils.getMonsterById(this, 2)],
-                playerMonsters: [dataManager.getStore.get(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY)[0]]
-            }
+                playerMonsters: [
+                    dataManager.getStore.get(
+                        DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+                    )[0],
+                ],
+            };
         }
 
         this.activePlayerAttackIndex = -1;
@@ -65,8 +74,6 @@ export class BattleScene extends BaseScene {
         ) {
             this.skipAnimations = false;
         }
-
-        console.log("this.skipAnimations: ", this.skipAnimations);
     }
 
     create(): void {
@@ -120,6 +127,8 @@ export class BattleScene extends BaseScene {
                 this.battleStateMachine.currentStateName ===
                     BATTLE_STATES.POST_ATTACK_CHECK ||
                 this.battleStateMachine.currentStateName ===
+                    BATTLE_STATES.GAIN_EXPERIENCE ||
+                this.battleStateMachine.currentStateName ===
                     BATTLE_STATES.FLEE_ATTEMPT)
         ) {
             this.battleMenu.handlePlayerInput("OK");
@@ -166,7 +175,6 @@ export class BattleScene extends BaseScene {
 
             this.battleMenu.hideMonsterAttackSubMenu();
             this.battleStateMachine.setState(BATTLE_STATES.ENEMY_INPUT);
-
             return;
         }
 
@@ -220,7 +228,7 @@ export class BattleScene extends BaseScene {
             callback();
             return;
         }
-        
+
         this.battleMenu.updateInfoPanelMesssageNoInputRequired(
             `for ${this.activeEnemyMonster.name} used ${
                 this.activeEnemyMonster.attacks[this.activeEnemyAttackIndex]
@@ -253,28 +261,43 @@ export class BattleScene extends BaseScene {
     }
 
     private postBattleSequenceCheck() {
-        this.sceneData.playerMonsters[this.activePlayerMonsterPartyIndex].currentHp = this.activePlayerMonster.getCurrentHp;
-        dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY, this.sceneData.playerMonsters);
+
+        this.sceneData.playerMonsters[
+            this.activePlayerMonsterPartyIndex
+        ].currentHp = this.activePlayerMonster.getCurrentHp;
+        dataManager.getStore.set(
+            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY,
+            this.sceneData.playerMonsters
+        );
         if (this.activeEnemyMonster.isFainted) {
+            this.controls.lockInput = true;
             this.activeEnemyMonster.playDeathAnimation(() => {
+                this.controls.lockInput = false;
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
-                    [
-                        `Wild ${this.activeEnemyMonster.name} fainted.`,
-                        "You have gained some experience.",
-                    ],
+                    [`Wild ${this.activeEnemyMonster.name} fainted.`],
                     () => {
                         this.battleStateMachine.setState(
-                            BATTLE_STATES.FINISHED
+                            BATTLE_STATES.GAIN_EXPERIENCE
                         );
                     },
                     this.skipAnimations
                 );
             });
+
+            const battleCount = dataManager.getStore.get(
+                DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
+            );
+            dataManager.getStore.set(
+                DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT,
+                battleCount + 1
+            );
             return;
         }
 
         if (this.activePlayerMonster.isFainted) {
+            this.controls.lockInput = true;
             this.activePlayerMonster.playDeathAnimation(() => {
+                this.controls.lockInput = false;
                 this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
                     [
                         `${this.activePlayerMonster.name} fainted.`,
@@ -298,7 +321,7 @@ export class BattleScene extends BaseScene {
     private transitionToNextScene() {
         const sceneDataToPass: WorldSceneData = {
             isPlayerKnockedOut: this.playerKnockedOut,
-        }
+        };
         this.cameras.main.fadeOut(600, 0, 0, 0);
         this.cameras.main.once(
             Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
@@ -405,7 +428,9 @@ export class BattleScene extends BaseScene {
                     );
                     this.time.delayedCall(500, () => {
                         this.enemyAttack(() => {
-                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                            this.battleStateMachine.setState(
+                                BATTLE_STATES.POST_ATTACK_CHECK
+                            );
                         });
                     });
                     return;
@@ -414,24 +439,30 @@ export class BattleScene extends BaseScene {
                 if (this.battleMenu.isAttempingToFlee) {
                     this.time.delayedCall(500, () => {
                         this.enemyAttack(() => {
-                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                            this.battleStateMachine.setState(
+                                BATTLE_STATES.POST_ATTACK_CHECK
+                            );
                         });
                     });
                     return;
                 }
 
                 const randomNumber = Phaser.Math.Between(0, 1);
-                if(randomNumber === 0){
+                if (randomNumber === 0) {
                     this.playerAttack(() => {
                         this.enemyAttack(() => {
-                            this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                            this.battleStateMachine.setState(
+                                BATTLE_STATES.POST_ATTACK_CHECK
+                            );
                         });
                     });
                     return;
                 }
                 this.enemyAttack(() => {
                     this.playerAttack(() => {
-                        this.battleStateMachine.setState(BATTLE_STATES.POST_ATTACK_CHECK);
+                        this.battleStateMachine.setState(
+                            BATTLE_STATES.POST_ATTACK_CHECK
+                        );
                     });
                 });
             },
@@ -445,19 +476,6 @@ export class BattleScene extends BaseScene {
         this.battleStateMachine.addState({
             name: BATTLE_STATES.FINISHED,
             onEnter: () => {
-                const battleCount = dataManager.getStore.get(
-                    DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
-                );
-                dataManager.getStore.set(
-                    DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT,
-                    battleCount + 1
-                );
-                console.log(
-                    dataManager.getStore.get(
-                        DATA_MANAGER_STORE_KEYS.BATTLE_OPTIONS_BATTLE_COUNT
-                    )
-                );
-
                 this.transitionToNextScene();
             },
         });
@@ -491,6 +509,87 @@ export class BattleScene extends BaseScene {
                     },
                     this.skipAnimations
                 );
+            },
+        });
+
+        this.battleStateMachine.addState({
+            name: BATTLE_STATES.GAIN_EXPERIENCE,
+            onEnter: () => {
+                const gainedExpForActiveMonster = calculateExpGainedFromMonster(
+                    this.activeEnemyMonster.baseExpValue,
+                    this.activeEnemyMonster.level,
+                    true
+                );
+                const gainedExpForInActiveMonster =
+                    calculateExpGainedFromMonster(
+                        this.activeEnemyMonster.baseExpValue,
+                        this.activeEnemyMonster.level,
+                        false
+                    );
+
+                const messages: string[] = [];
+                let didActiveMonsterLevelUp = false;
+                this.sceneData.playerMonsters.forEach(
+                    (monster: Monster, index: number) => {
+                        if(this.sceneData.playerMonsters[index].currentHp <= 0){
+                            return;
+                        }
+
+                        let statChanges: StatChanges | null;
+                        const monsterMessages: string[] = [];
+                        if (index === this.activePlayerMonsterPartyIndex) {
+                            statChanges =
+                                this.activePlayerMonster.updateMonsterExp(
+                                    gainedExpForActiveMonster
+                                );
+                                monsterMessages.push(
+                                `${this.sceneData.playerMonsters[index].name} gained ${gainedExpForActiveMonster} exp.`
+                            );
+                            if(statChanges.level !== 0){
+                                didActiveMonsterLevelUp = true;
+                            }
+                        } else {
+                            statChanges = handleMonsterGainingExperience(this.sceneData.playerMonsters[index], gainedExpForInActiveMonster);
+                            monsterMessages.push(
+                                `${this.sceneData.playerMonsters[index].name} gained ${gainedExpForActiveMonster} exp.`
+                            );
+                        }
+
+                        if (statChanges?.level !== 0) {
+                            monsterMessages.push(
+                                `${this.sceneData.playerMonsters[index].name} level increase to ${this.sceneData.playerMonsters[index].currentLevel}!`,
+                                `${this.sceneData.playerMonsters[index].name} attack increased by ${statChanges?.attack} \nand health increased by ${statChanges?.health}`
+                            );
+                        }
+
+                        if(index ===  this.activePlayerMonsterPartyIndex){
+                            messages.unshift(...monsterMessages);
+                        } else{
+                            messages.push(...monsterMessages);
+                        }
+                    }
+                );
+
+                this.controls.lockInput = true;
+                this.activePlayerMonster.updateMonsterExpBar(() => {
+                    this.battleMenu.updateInfoPanelMesssageAndWaitForInput(
+                        messages,
+                        () => {
+                            this.time.delayedCall(200, () => {
+                                //update dataManager with latest monster data
+                                dataManager.getStore.set(
+                                    DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY,
+                                    this.sceneData.playerMonsters
+                                );
+                                this.battleStateMachine.setState(
+                                    BATTLE_STATES.FINISHED
+                                );
+                            });
+                        },
+                        this.skipAnimations
+                    );
+                    this.controls.lockInput = false;
+                }, didActiveMonsterLevelUp);
             },
         });
 

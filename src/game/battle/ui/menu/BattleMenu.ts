@@ -731,7 +731,7 @@ export class BattleMenu {
     private handleSceneResume(sys: Phaser.Scenes.Systems, data: InventorySceneItemUsedData){
         console.log(`[${BattleMenu.name }: handleSceneResume] scene has been resumed, data provied: ${JSON.stringify(data)}`);
 
-        if(!data || !data.itemUsed){
+        if(!data || !data.wasItemUsed){
             this.switchToMainBattleMenu();
             return;
         }

@@ -272,7 +272,7 @@ export class InventoryScene extends BaseScene {
         this.controls.lockInput = true;
         this.scene.stop(SCENE_KEYS.INVENTORY_SCENE);
         const sceneDataToPass: InventorySceneItemUsedData = {
-            itemUsed: wasItemUsed,
+            wasItemUsed: wasItemUsed,
             item: item ?? undefined,
         };
         this.scene.resume(this.sceneData.previousSceneName, sceneDataToPass);

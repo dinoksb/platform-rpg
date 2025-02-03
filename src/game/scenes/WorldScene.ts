@@ -3,7 +3,6 @@ import { WORLD_ASSET_KEYS } from "../../assets/AssetKeys";
 import { Player } from "../world/characters/Player";
 import { DIRECTION } from "../common/Direction";
 import {
-    BATTLE_ENCOUNTER_RATE,
     TILE_SIZE,
     TILED_COLLISION_LAYER_ALPHA,
 } from "../../Config";
@@ -21,6 +20,8 @@ import { DataUtils } from "../../utils/DataUtils";
 import { Monster, NPC_EVENT_TYPE } from "../interfaces/TypeDef";
 import { weightedRandom } from "../../utils/Random";
 import { exhaustiveGuard } from "../../utils/Guard";
+import { EncounterManager } from "../world/encounter/EncounterManager";
+import { RandomEncounterStrategy } from "../world/encounter/RandomEncounterStrategy";
 
 interface TiledObjectProperty {
     name: string;
@@ -49,7 +50,7 @@ export class WorldScene extends BaseScene {
     private player: Player;
     private encounterLayer: Phaser.Tilemaps.TilemapLayer;
     private toggleableLayers: ToggleableCollisionLayer[];
-    private whildMonsterEncountered: boolean;
+    private wildMonsterEncountered: boolean;
     private dialogUI: DialogUI;
     private isNewGame: boolean;
     private npcs: NPC[];
@@ -59,6 +60,7 @@ export class WorldScene extends BaseScene {
     private lastNpcEventHandledIndex: number;
     private isProcessingNpcEvent: boolean;
     private moreNpcEventsToProcess: boolean;
+    private encounterManager: EncounterManager;
 
     constructor() {
         super({
@@ -77,7 +79,7 @@ export class WorldScene extends BaseScene {
             };
         }
 
-        this.whildMonsterEncountered = false;
+        this.wildMonsterEncountered = false;
         this.npcPlayerIsInteractingWith = undefined;
         this.isNewGame = !dataManager.getStore.get(
             DATA_MANAGER_STORE_KEYS.GAME_STARTED
@@ -261,6 +263,9 @@ export class WorldScene extends BaseScene {
             );
         }
 
+        // creat encounterManager
+        this.encounterManager = new EncounterManager(new RandomEncounterStrategy());
+
         this.cameras.main.fadeIn(
             1000,
             0,
@@ -279,6 +284,7 @@ export class WorldScene extends BaseScene {
                 }
             }
         );
+        
         if (this.isNewGame) {
             this.controls.lockInput = true;
             this.cameras.main.once(
@@ -304,7 +310,7 @@ export class WorldScene extends BaseScene {
     update() {
         super.update();
 
-        if (this.whildMonsterEncountered) {
+        if (this.wildMonsterEncountered) {
             this.player.update();
             return;
         }
@@ -503,6 +509,8 @@ export class WorldScene extends BaseScene {
                 scene: this,
                 position: { x: npcObject.x, y: npcObject.y - TILE_SIZE },
                 direction: DIRECTION.DOWN,
+                collisionLayer: undefined,
+                otherCharactersToCheckForCollisionsWith: [], // 또는 NPC끼리의 충돌을 검사할 대상 배열 (없다면 빈 배열)
                 frame: npcDetails.frame,
                 spriteGridMovementFinishedCallback: () => {},
                 spriteChangedDirectionCallback: () => {},
@@ -519,44 +527,72 @@ export class WorldScene extends BaseScene {
         }
 
         const { x, y } = this.player.getSprite;
-        const isInEncounterZone =
-            this.encounterLayer.getTileAtWorldXY(x, y, true).index !== -1;
-        if (!isInEncounterZone) {
+
+        this.wildMonsterEncountered = this.encounterManager.checkEncounter({x, y}, this.encounterLayer);
+        if(!this.wildMonsterEncountered){
             return;
         }
+        const encounterAreaId = (
+            this.encounterLayer.layer.properties as TiledObjectProperty[]
+        ).find(
+            (property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA
+        )?.value;
+        const possibleMonsters = DataUtils.getEncounterAreaDetails(
+            this,
+            encounterAreaId
+        );
+        const randomMonsterId = weightedRandom(possibleMonsters);
 
-        this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
-        if (this.whildMonsterEncountered) {
-            const encounterAreaId = (
-                this.encounterLayer.layer.properties as TiledObjectProperty[]
-            ).find(
-                (property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA
-            )?.value;
-            const possibleMonsters = DataUtils.getEncounterAreaDetails(
-                this,
-                encounterAreaId
-            );
-            const randomMonsterId = weightedRandom(possibleMonsters);
+        console.log(
+            `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster in area ${encounterAreaId} and monster id has been picked randomly ${randomMonsterId}`
+        );
+        this.cameras.main.fadeOut(1000, 0, 0);
+        this.cameras.main.once(
+            Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+            () => {
+                const dataToPass: BattleSceneData = {
+                    enemyMonsters: [
+                        DataUtils.getMonsterById(this, randomMonsterId),
+                    ],
+                    playerMonsters: dataManager.getStore.get(
+                        DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+                    ),
+                };
+                this.scene.start(SCENE_KEYS.BATTLE_SCENE, dataToPass);
+            }
+        );
+        // this.whildMonsterEncountered = Math.random() < BATTLE_ENCOUNTER_RATE;
+        // if (this.whildMonsterEncountered) {
+        //     const encounterAreaId = (
+        //         this.encounterLayer.layer.properties as TiledObjectProperty[]
+        //     ).find(
+        //         (property) => property.name === TILED_ENCOUNTER_PROPERTY.AREA
+        //     )?.value;
+        //     const possibleMonsters = DataUtils.getEncounterAreaDetails(
+        //         this,
+        //         encounterAreaId
+        //     );
+        //     const randomMonsterId = weightedRandom(possibleMonsters);
 
-            console.log(
-                `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster in area ${encounterAreaId} and monster id has been picked randomly ${randomMonsterId}`
-            );
-            this.cameras.main.fadeOut(1000, 0, 0);
-            this.cameras.main.once(
-                Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
-                () => {
-                    const dataToPass: BattleSceneData = {
-                        enemyMonsters: [
-                            DataUtils.getMonsterById(this, randomMonsterId),
-                        ],
-                        playerMonsters: dataManager.getStore.get(
-                            DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
-                        ),
-                    };
-                    this.scene.start(SCENE_KEYS.BATTLE_SCENE, dataToPass);
-                }
-            );
-        }
+        //     console.log(
+        //         `[${WorldScene.name}:handlePlayerMovementUpdate] player is encountered a wild monster in area ${encounterAreaId} and monster id has been picked randomly ${randomMonsterId}`
+        //     );
+        //     this.cameras.main.fadeOut(1000, 0, 0);
+        //     this.cameras.main.once(
+        //         Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE,
+        //         () => {
+        //             const dataToPass: BattleSceneData = {
+        //                 enemyMonsters: [
+        //                     DataUtils.getMonsterById(this, randomMonsterId),
+        //                 ],
+        //                 playerMonsters: dataManager.getStore.get(
+        //                     DATA_MANAGER_STORE_KEYS.MONSTERS_IN_PARTY
+        //                 ),
+        //             };
+        //             this.scene.start(SCENE_KEYS.BATTLE_SCENE, dataToPass);
+        //         }
+        //     );
+        // }
     }
 
     private setCollisionEnabledForLayer(layerName: string, enable: boolean) {

@@ -46,8 +46,6 @@ export class MonsterPartyScene extends BaseScene {
     private monsters: Monster[];
     private isMovingMonster: boolean;
     private waitingForInput: boolean;
-    private monsterToBeMovedIndex: number | undefined;
-    private monsterContainers: Phaser.GameObjects.Container[];
     private sceneData: MonsterPartySceneData;
 
     constructor() {
@@ -69,8 +67,6 @@ export class MonsterPartyScene extends BaseScene {
         );
         this.waitingForInput = false;
         this.isMovingMonster = false;
-        this.monsterToBeMovedIndex = undefined;
-        this.monsterContainers = [];
     }
 
     create(): void {

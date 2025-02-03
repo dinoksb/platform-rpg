@@ -1,5 +1,3 @@
-// import { Game as MainGame } from "./scenes/Game";
-// import { Game, Types } from "phaser";
 import { PreloadScene } from "./scenes/PreloadScene";
 import { BattleScene } from "./scenes/BattleScene";
 import { WorldScene } from "./scenes/WorldScene";
@@ -8,7 +6,7 @@ import { MonsterPartyScene } from "./scenes/MonsterPartyScene";
 import { MonsterDatailsScene } from "./scenes/MonsterDetailsScene";
 import { InventoryScene } from "./scenes/InventoryScene";
 import { EndingScene } from "./scenes/EndingScene";
-import { Game, Types } from "phaser";
+import { Types } from "phaser";
 
 //  Find out more information about the Game Config at:
 //  https://newdocs.phaser.io/docs/3.70.0/Phaser.Types.Core.GameConfig
@@ -25,10 +23,6 @@ const config: Types.Core.GameConfig = {
     backgroundColor: "#000000",
     scene: [PreloadScene, TitleScene, WorldScene, BattleScene, MonsterPartyScene, MonsterDatailsScene, InventoryScene, EndingScene],
 };
-
-// const StartGame = (parent: string) => {
-//     return new Game({ ...config, parent });
-// };
 
 const StartGame = (parent: string) => {
     return new Phaser.Game({...config, parent});

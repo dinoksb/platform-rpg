@@ -87,9 +87,14 @@ export class WorldScene extends BaseScene {
 
         // update player location, and map data if the player knocked out in a battle
         if (this.sceneData.isPlayerKnockedOut) {
+            let map = this.make.tilemap({
+                key: WORLD_ASSET_KEYS.WORLD_MAIN_LEVEL,
+            });
+            const reviveLocation = map.getObjectLayer('Revive-Location')?.objects[0];
+
             dataManager.getStore.set(DATA_MANAGER_STORE_KEYS.PLAYER_POSITION, {
-                x: 6 * TILE_SIZE,
-                y: 21 * TILE_SIZE,
+                x: reviveLocation?.x ? reviveLocation.x * TILE_SIZE : 0,
+                y: reviveLocation?.y ? reviveLocation.y * TILE_SIZE : 0,
             });
             dataManager.getStore.set(
                 DATA_MANAGER_STORE_KEYS.PLAYER_DIRECTION,
@@ -260,14 +265,15 @@ export class WorldScene extends BaseScene {
             );
         }
 
-        this.cameras.main.fadeIn(1000, 0, 0, 0, (progress: number) => {
+
+        this.cameras.main.fadeIn(1000, 0, 0, 0, (camera: Phaser.Cameras.Scene2D.Camera, progress: number) => {
             if (progress === 1) {
                 // if the player was knocked out, want lock input, heal player, and have show message
                 if (this.sceneData.isPlayerKnockedOut) {
                     this.healPlayerParty();
                     this.dialogUI.showDialogModal([
-                        "It looks like your team put up quite a fight...",
-                        "I want ahead and healed them up for you.",
+                        "I fought pretty well, but I lost in the end...",
+                        "This time, I’ll make sure to succeed in my adventure!",
                     ]);
                 }
             }
@@ -623,9 +629,6 @@ export class WorldScene extends BaseScene {
         }
 
         const eventType = eventToHandle?.type;
-
-        console.log("eventType: ", eventType);
-
         switch (eventType) {
             case NPC_EVENT_TYPE.MESSAGE:
                 const messages = eventToHandle?.data.messages;

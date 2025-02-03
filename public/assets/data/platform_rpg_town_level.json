@@ -622,30 +622,19 @@
          "draworder":"topdown",
          "id":25,
          "locked":true,
-         "name":"Area-Metadata",
+         "name":"Revive-Location",
          "objects":[
                 {
                  "gid":194,
                  "height":64,
                  "id":23,
                  "name":"",
-                 "properties":[
-                        {
-                         "name":"faint_location",
-                         "type":"string",
-                         "value":"building_1"
-                        }, 
-                        {
-                         "name":"id",
-                         "type":"int",
-                         "value":0
-                        }],
                  "rotation":0,
-                 "type":"area_metadata",
+                 "type":"",
                  "visible":true,
                  "width":64,
-                 "x":192,
-                 "y":1408
+                 "x":6,
+                 "y":21
                 }],
          "opacity":1,
          "type":"objectgroup",
